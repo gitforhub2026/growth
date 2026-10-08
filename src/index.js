@@ -38,6 +38,58 @@ async function health(env) {
   }
 }
 
+async function saveFeedback(request, env) {
+  if (!env.AUDIO) return json({ ok: false, message: "暫時無法送出，請稍後再試。" }, 503);
+  if (request.method !== "POST") {
+    return new Response("Method Not Allowed", { status: 405, headers: { Allow: "POST" } });
+  }
+
+  const contentLength = Number(request.headers.get("content-length") || 0);
+  if (contentLength > 8192) return json({ ok: false, message: "內容太長，請稍微精簡後再送出。" }, 413);
+
+  let body;
+  try {
+    body = await request.json();
+  } catch {
+    return json({ ok: false, message: "送出的內容格式不正確。" }, 400);
+  }
+
+  // Invisible honeypot for basic bot filtering. Return success so bots do not retry.
+  if (String(body.website || "").trim()) return json({ ok: true });
+
+  const name = String(body.name || "").trim().slice(0, 80);
+  const contact = String(body.contact || "").trim().slice(0, 160);
+  const message = String(body.message || "").trim();
+
+  if (message.length < 2) return json({ ok: false, message: "請留下一點想告訴我們的內容。" }, 400);
+  if (message.length > 2500) return json({ ok: false, message: "內容太長，請控制在 2500 字以內。" }, 400);
+
+  const now = new Date();
+  const date = now.toISOString().slice(0, 10);
+  const safeTime = now.toISOString().replace(/[:.]/g, "-");
+  const id = crypto.randomUUID();
+  const key = `feedback/${date}/${safeTime}-${id}.json`;
+
+  const record = {
+    name,
+    contact,
+    message,
+    createdAt: now.toISOString(),
+    page: request.headers.get("referer") || "",
+    userAgent: (request.headers.get("user-agent") || "").slice(0, 300),
+  };
+
+  try {
+    await env.AUDIO.put(key, JSON.stringify(record, null, 2), {
+      httpMetadata: { contentType: "application/json; charset=utf-8" },
+      customMetadata: { source: "growth-toolkit" },
+    });
+    return json({ ok: true, message: "謝謝你的建議，我們收到了。" });
+  } catch (error) {
+    return json({ ok: false, message: "暫時無法送出，請稍後再試。" }, 500);
+  }
+}
+
 async function serveObject(request, env, key, allowed) {
   if (!env.AUDIO) return new Response("Storage unavailable", { status: 503 });
   if (!key || key.includes("..") || !allowed(key.toLowerCase())) {
@@ -84,6 +136,7 @@ export default {
     const url = new URL(request.url);
 
     if (url.pathname === "/audio-health") return health(env);
+    if (url.pathname === "/feedback") return saveFeedback(request, env);
 
     if (url.pathname.startsWith("/audio/")) {
       let key;
