@@ -1,0 +1,1 @@
+Logo asset will be inserted from uploaded LOGO.png in a follow-up binary commit.
