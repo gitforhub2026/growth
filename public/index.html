@@ -16,8 +16,9 @@
   <main class="shell">
     <header class="topbar">
       <a class="brand" href="#top" aria-label="回到首頁">
-        <span class="brand-mark">傳</span>
-        <span><strong>傳愛成長工具箱</strong><small>Growth Toolkit</small></span>
+        <img class="brand-logo" src="/media/growth-logo.webp" alt="傳愛成長工具箱" onerror="this.style.display='none';this.nextElementSibling.style.display='grid'">
+        <span class="brand-mark brand-fallback">傳</span>
+        <span class="brand-text"><strong>傳愛成長工具箱</strong><small>Growth Toolkit</small></span>
       </a>
       <div class="top-meta">教師使用 · 4 大入口 · 12 集聲音內容</div>
     </header>
@@ -51,6 +52,7 @@
       <div class="use-case"><span class="use-no">03</span><div><strong>備課延伸</strong><p>聲音、海報與教師手冊可分開使用，也能依課堂需要自由串接。</p></div></div>
     </section>
 
+    <div id="player-sticky-anchor" aria-hidden="true"></div>
     <section class="player-panel" id="player-panel" aria-live="polite">
       <button class="player-art" id="main-play" type="button" aria-label="播放目前集數"><span id="player-number">01</span><i></i><i></i><i></i></button>
       <div class="player-copy">
@@ -71,6 +73,60 @@
       <div class="episode-grid" id="episode-grid"></div>
     </section>
 
+    <section class="poster-library" id="posters" aria-labelledby="poster-title">
+      <div class="section-head media-head">
+        <div><div class="eyebrow">VISUAL TOOLKIT · 23 POSTERS</div><h2 id="poster-title">一張海報，就是一個可以立刻帶進教室的入口</h2><p>可投影、可討論，也適合搭配導師時間、個別陪伴與課堂延伸。點開海報即可放大閱讀。</p></div>
+      </div>
+      <div class="poster-grid">
+        <button class="poster-card" data-image="/media/1.webp" data-title="話語遙控器"><img loading="lazy" src="/media/1.webp" alt="話語遙控器海報"><span>話語遙控器</span></button>
+        <button class="poster-card" data-image="/media/2.webp" data-title="有時候，笑聲也會把事情放大"><img loading="lazy" src="/media/2.webp" alt="有時候，笑聲也會把事情放大海報"><span>笑聲也會把事情放大</span></button>
+        <button class="poster-card" data-image="/media/3.webp" data-title="我的需求雷達"><img loading="lazy" src="/media/3.webp" alt="我的需求雷達海報"><span>我的需求雷達</span></button>
+        <button class="poster-card" data-image="/media/4.webp" data-title="我的控制圈"><img loading="lazy" src="/media/4.webp" alt="我的控制圈海報"><span>我的控制圈</span></button>
+        <button class="poster-card" data-image="/media/5.webp" data-title="我的能量電池"><img loading="lazy" src="/media/5.webp" alt="我的能量電池海報"><span>我的能量電池</span></button>
+        <button class="poster-card" data-image="/media/6.webp" data-title="加入購物車，不等於一定要結帳"><img loading="lazy" src="/media/6.webp" alt="加入購物車不等於一定要結帳海報"><span>加入購物車，不等於要結帳</span></button>
+        <button class="poster-card" data-image="/media/7.webp" data-title="卡住，不等於不會"><img loading="lazy" src="/media/7.webp" alt="卡住不等於不會海報"><span>卡住，不等於不會</span></button>
+        <button class="poster-card" data-image="/media/8.webp" data-title="你的大腦，不需要同時開 17 個分頁"><img loading="lazy" src="/media/8.webp" alt="大腦不需要同時開17個分頁海報"><span>大腦不用同時開 17 個分頁</span></button>
+        <button class="poster-card" data-image="/media/9.webp" data-title="我的界線，不需要大家都一樣"><img loading="lazy" src="/media/9.webp" alt="我的界線海報"><span>我的界線</span></button>
+        <button class="poster-card" data-image="/media/10.webp" data-title="不用做完，先開始就好"><img loading="lazy" src="/media/10.webp" alt="不用做完先開始就好海報"><span>不用做完，先開始就好</span></button>
+        <button class="poster-card" data-image="/media/11.webp" data-title="不想做，也可以有出口"><img loading="lazy" src="/media/11.webp" alt="不想做也可以有出口海報"><span>不想做，也可以有出口</span></button>
+        <button class="poster-card" data-image="/media/12.webp" data-title="先別急著轉傳"><img loading="lazy" src="/media/12.webp" alt="先別急著轉傳海報"><span>先別急著轉傳</span></button>
+        <button class="poster-card" data-image="/media/13.webp" data-title="大腦導航"><img loading="lazy" src="/media/13.webp" alt="大腦導航海報"><span>大腦導航</span></button>
+        <button class="poster-card" data-image="/media/14.webp" data-title="不是每個通知，都要現在回"><img loading="lazy" src="/media/14.webp" alt="不是每個通知都要現在回海報"><span>不是每個通知，都要現在回</span></button>
+        <button class="poster-card" data-image="/media/15.webp" data-title="下一個，是誰決定的？"><img loading="lazy" src="/media/15.webp" alt="下一個是誰決定的海報"><span>下一個，是誰決定的？</span></button>
+        <button class="poster-card" data-image="/media/16.webp" data-title="手機有電，我呢？"><img loading="lazy" src="/media/16.webp" alt="手機有電我呢海報"><span>手機有電，我呢？</span></button>
+        <button class="poster-card" data-image="/media/17.webp" data-title="衝突翻譯機"><img loading="lazy" src="/media/17.webp" alt="衝突翻譯機海報"><span>衝突翻譯機</span></button>
+        <button class="poster-card" data-image="/media/18.webp" data-title="你看到的，可能只是別人的精選畫面"><img loading="lazy" src="/media/18.webp" alt="精選畫面海報"><span>你看到的，可能只是精選畫面</span></button>
+        <button class="poster-card" data-image="/media/19.webp" data-title="情緒溫度計"><img loading="lazy" src="/media/19.webp" alt="情緒溫度計海報"><span>情緒溫度計</span></button>
+        <button class="poster-card" data-image="/media/20.webp" data-title="送出以前，還有 5 秒"><img loading="lazy" src="/media/20.webp" alt="送出以前還有5秒海報"><span>送出以前，還有 5 秒</span></button>
+        <button class="poster-card" data-image="/media/21.webp" data-title="情緒急救箱"><img loading="lazy" src="/media/21.webp" alt="情緒急救箱海報"><span>情緒急救箱</span></button>
+        <button class="poster-card" data-image="/media/22.webp" data-title="把大事情切小"><img loading="lazy" src="/media/22.webp" alt="把大事情切小海報"><span>把大事情切小</span></button>
+        <button class="poster-card" data-image="/media/23.webp" data-title="注意力探照燈"><img loading="lazy" src="/media/23.webp" alt="注意力探照燈海報"><span>注意力探照燈</span></button>
+      </div>
+    </section>
+
+    <section class="manual-section" id="manual" aria-labelledby="manual-title">
+      <div class="manual-copy">
+        <div class="eyebrow">TEACHER'S GUIDE · 54 PAGES</div>
+        <h2 id="manual-title">教師手冊，不只告訴老師「教什麼」，也整理「怎麼帶」</h2>
+        <p>四大入口、17 個核心工具，每個工具都有 2 分鐘、10 分鐘、40 分鐘三種使用深度；可依班級狀況快速取用。</p>
+        <div class="manual-badges"><span>4 大入口</span><span>17 個核心工具</span><span>15 個生活 CASE</span><span>2 / 10 / 40 MIN</span></div>
+        <div class="manual-actions">
+          <a class="manual-btn primary" href="/media/teacher-guide.pdf" target="_blank" rel="noopener">線上翻閱完整手冊</a>
+          <a class="manual-btn" href="/media/teacher-guide.pdf" download>下載 PDF</a>
+        </div>
+      </div>
+      <div class="manual-preview">
+        <button class="guide-cover" data-image="/media/guide-01.webp" data-title="教師手冊封面"><img src="/media/guide-01.webp" alt="傳愛成長工具箱教師手冊封面"></button>
+        <div class="guide-pages">
+          <button data-image="/media/guide-04.webp" data-title="目錄"><img loading="lazy" src="/media/guide-04.webp" alt="教師手冊目錄預覽"></button>
+          <button data-image="/media/guide-05.webp" data-title="這套教材怎麼用"><img loading="lazy" src="/media/guide-05.webp" alt="教師手冊使用方式預覽"></button>
+          <button data-image="/media/guide-07.webp" data-title="17 個核心工具總覽"><img loading="lazy" src="/media/guide-07.webp" alt="17個核心工具總覽預覽"></button>
+          <button data-image="/media/guide-50.webp" data-title="生活困境 CASE 快速索引"><img loading="lazy" src="/media/guide-50.webp" alt="生活困境CASE快速索引預覽"></button>
+          <button data-image="/media/guide-54.webp" data-title="老師快速查找"><img loading="lazy" src="/media/guide-54.webp" alt="老師快速查找預覽"></button>
+        </div>
+      </div>
+    </section>
+
     <section class="teacher-note" aria-labelledby="teacher-note-title">
       <div class="note-mark">✦</div>
       <div><div class="eyebrow">FOR TEACHERS</div><h2 id="teacher-note-title">不是一套要照順序「上完」的課</h2><p>比較像放在教室裡的一只工具箱。孩子正在生氣、關係卡住、一直想不停、遇到挫折，或不知道下一步在哪裡時，都能找到相對應的工具，作為理解、討論與陪伴的起點。</p></div>
@@ -81,6 +137,13 @@
       <div class="footer-right">公益支持｜吳尊賢文教公益基金會</div>
     </footer>
   </main>
+
+  <dialog class="image-dialog" id="image-dialog">
+    <button class="dialog-close" type="button" aria-label="關閉預覽">×</button>
+    <div class="dialog-title" id="dialog-title"></div>
+    <img id="dialog-image" alt="教材預覽">
+  </dialog>
+
   <script src="/app.js"></script>
   <script src="/ui.js"></script>
 </body>
