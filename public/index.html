@@ -14,10 +14,7 @@
     <header class="topbar">
       <a class="brand" href="#top" aria-label="回到首頁">
         <span class="brand-mark">傳</span>
-        <span>
-          <strong>傳愛成長工具箱</strong>
-          <small>Growth Toolkit</small>
-        </span>
+        <span><strong>傳愛成長工具箱</strong><small>Growth Toolkit</small></span>
       </a>
       <div class="top-meta">教師使用 · 12 集聲音內容</div>
     </header>
@@ -28,9 +25,7 @@
         <h1>陪孩子把事情<br>想清楚一點。</h1>
         <p class="lead">從每天真的會遇到的情緒、人際、學習與選擇出發。不是急著給答案，而是多提供一個看事情的方法，讓對話有地方開始。</p>
         <div class="hero-meta" aria-label="內容摘要">
-          <span><b>12</b> 個主題</span>
-          <span><b>3:45</b> 聲音內容</span>
-          <span><b>單集</b> 即可使用</span>
+          <span><b>12</b> 個主題</span><span><b>3:45</b> 聲音內容</span><span><b>單集</b> 即可使用</span>
         </div>
       </div>
 
@@ -54,23 +49,20 @@
     </section>
 
     <section class="player-panel" id="player-panel" aria-live="polite">
-      <div class="player-art" aria-hidden="true"><span id="player-number">12</span><i></i><i></i><i></i></div>
+      <button class="player-art" id="main-play" type="button" aria-label="播放目前集數"><span id="player-number">01</span><i></i><i></i><i></i></button>
       <div class="player-copy">
         <div class="player-kicker">NOW PLAYING</div>
-        <div class="player-title" id="player-title">傳愛成長工具箱</div>
-        <div class="player-desc" id="player-desc">每一集都能獨立使用。從現在最貼近班級或孩子狀態的主題開始即可。</div>
-        <audio id="audio-player" controls preload="metadata"></audio>
-        <div class="player-status" id="player-status"></div>
+        <div class="player-title" id="player-title">EP 01｜理智線斷裂前的五道安檢</div>
+        <div class="player-desc" id="player-desc">情緒衝上來之前，身體、念頭和行動通常會先留下線索。這一集把「快要爆掉」拆成幾個可以辨認的訊號。</div>
+        <div class="quick-play-row"><button id="quick-play" class="quick-play" type="button">▶ 播放第 01 集</button><span>也可使用下方原生播放器拖曳進度</span></div>
+        <audio id="audio-player" controls preload="metadata" src="/audio/01.m4a"></audio>
+        <div class="player-status" id="player-status">正在載入第 01 集…</div>
       </div>
     </section>
 
     <section class="library" aria-labelledby="library-title">
       <div class="section-head">
-        <div>
-          <div class="eyebrow">EPISODE LIBRARY</div>
-          <h2 id="library-title">12 個主題，一個隨時可打開的工具箱</h2>
-          <p>每張卡片都整理了適合的使用情境、內容摘要與本集重點。</p>
-        </div>
+        <div><div class="eyebrow">EPISODE LIBRARY</div><h2 id="library-title">12 個主題，一個隨時可打開的工具箱</h2><p>每張卡片都整理了適合的使用情境、內容摘要與本集重點。</p></div>
         <div class="filters" id="filters" aria-label="主題分類"></div>
       </div>
       <div class="episode-grid" id="episode-grid"></div>
@@ -78,18 +70,11 @@
 
     <section class="teacher-note" aria-labelledby="teacher-note-title">
       <div class="note-mark">✦</div>
-      <div>
-        <div class="eyebrow">FOR TEACHERS</div>
-        <h2 id="teacher-note-title">不是一套要照順序「上完」的課</h2>
-        <p>比較像放在教室裡的一只工具箱。孩子正在生氣、關係卡住、一直想不停、遇到挫折，或不知道下一步在哪裡時，都能找到相對應的一集，作為理解、討論與陪伴的起點。</p>
-      </div>
+      <div><div class="eyebrow">FOR TEACHERS</div><h2 id="teacher-note-title">不是一套要照順序「上完」的課</h2><p>比較像放在教室裡的一只工具箱。孩子正在生氣、關係卡住、一直想不停、遇到挫折，或不知道下一步在哪裡時，都能找到相對應的一集，作為理解、討論與陪伴的起點。</p></div>
     </section>
 
     <footer class="footer">
-      <div>
-        <strong>傳愛成長工具箱</strong>
-        <span>Growth Toolkit</span>
-      </div>
+      <div><strong>傳愛成長工具箱</strong><span>Growth Toolkit</span></div>
       <div class="footer-right">公益支持｜吳尊賢文教公益基金會</div>
     </footer>
   </main>
