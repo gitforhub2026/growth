@@ -4,64 +4,93 @@
   <meta charset="utf-8">
   <meta name="viewport" content="width=device-width,initial-scale=1">
   <meta name="robots" content="noindex,nofollow">
-  <meta name="theme-color" content="#f6f3ec">
-  <meta name="description" content="傳愛成長工具箱：以 12 集聲音內容，陪老師帶孩子理解情緒、人際、學習與選擇。">
+  <meta name="theme-color" content="#f3efe6">
+  <meta name="description" content="傳愛成長工具箱：12 集聲音內容，陪老師從情緒、思考、學習與關係出發，和孩子一起找到下一步。">
   <title>傳愛成長工具箱</title>
   <link rel="stylesheet" href="/styles.css">
 </head>
 <body>
   <main class="shell">
-    <header class="hero">
-      <div class="eyebrow">GROWTH TOOLKIT · PODCAST</div>
-      <h1>傳愛成長工具箱</h1>
-      <p class="lead">從孩子常見的情緒、人際、學習與選擇出發，把抽象的道理轉成聽得懂、談得開、能帶回生活裡的思考工具。</p>
-      <div class="hero-meta" aria-label="內容摘要">
-        <span>12 集聲音內容</span>
-        <span>約 3 小時 46 分</span>
-        <span>可單集使用</span>
-      </div>
+    <header class="topbar">
+      <a class="brand" href="#top" aria-label="回到首頁">
+        <span class="brand-mark">傳</span>
+        <span>
+          <strong>傳愛成長工具箱</strong>
+          <small>Growth Toolkit</small>
+        </span>
+      </a>
+      <div class="top-meta">教師使用 · 12 集聲音內容</div>
     </header>
 
-    <section class="teacher-note" aria-labelledby="teacher-note-title">
-      <div class="note-mark">✦</div>
-      <div>
-        <h2 id="teacher-note-title">給老師的使用方式</h2>
-        <p>每一集都能獨立使用，可放在課前備課、班級討論、個別陪伴或課後延伸。內容不急著給標準答案，而是多提供一個看事情的方法，讓學生有機會找到更適合自己的下一步。</p>
+    <section class="hero" id="top">
+      <div class="hero-copy">
+        <div class="eyebrow">GROWTH TOOLKIT · AUDIO SERIES</div>
+        <h1>陪孩子把事情<br>想清楚一點。</h1>
+        <p class="lead">從每天真的會遇到的情緒、人際、學習與選擇出發。不是急著給答案，而是多提供一個看事情的方法，讓對話有地方開始。</p>
+        <div class="hero-meta" aria-label="內容摘要">
+          <span><b>12</b> 個主題</span>
+          <span><b>3:45</b> 聲音內容</span>
+          <span><b>單集</b> 即可使用</span>
+        </div>
+      </div>
+
+      <div class="hero-board" aria-label="四個主題方向">
+        <div class="board-label">第一輯 · 12 EPISODES</div>
+        <div class="board-number">12</div>
+        <div class="board-title">從一個正在發生的問題開始</div>
+        <div class="path-grid">
+          <div class="path-card path-1"><span>01</span><strong>看懂自己</strong><small>情緒 · 需要 · 內耗</small></div>
+          <div class="path-card path-2"><span>02</span><strong>先穩下來</strong><small>暫停 · 急救 · 導航</small></div>
+          <div class="path-card path-3"><span>03</span><strong>想清楚再決定</strong><small>學習 · 事實 · 控制圈</small></div>
+          <div class="path-card path-4"><span>04</span><strong>理解別人，也說出自己</strong><small>衝突 · 友誼 · 表達</small></div>
+        </div>
       </div>
     </section>
 
+    <section class="use-cases" aria-label="適合使用情境">
+      <div class="use-case"><span class="use-no">01</span><div><strong>班級討論</strong><p>從一個貼近生活的主題開場，讓學生比較容易說出自己的想法。</p></div></div>
+      <div class="use-case"><span class="use-no">02</span><div><strong>個別陪伴</strong><p>遇到情緒、人際或學習卡關時，多一個不急著說教的談話入口。</p></div></div>
+      <div class="use-case"><span class="use-no">03</span><div><strong>備課延伸</strong><p>單集可獨立收聽，也能搭配教師手冊、活動與課後延伸使用。</p></div></div>
+    </section>
+
     <section class="player-panel" id="player-panel" aria-live="polite">
+      <div class="player-art" aria-hidden="true"><span id="player-number">12</span><i></i><i></i><i></i></div>
       <div class="player-copy">
         <div class="player-kicker">NOW PLAYING</div>
-        <div class="player-title" id="player-title">選一集開始聽</div>
-        <div class="player-desc" id="player-desc">12 個主題都可獨立播放，也能搭配教師手冊與課堂活動。</div>
+        <div class="player-title" id="player-title">傳愛成長工具箱</div>
+        <div class="player-desc" id="player-desc">每一集都能獨立使用。從現在最貼近班級或孩子狀態的主題開始即可。</div>
+        <audio id="audio-player" controls preload="metadata"></audio>
+        <div class="player-status" id="player-status"></div>
       </div>
-      <audio id="audio-player" controls preload="metadata"></audio>
-      <div class="player-status" id="player-status"></div>
     </section>
 
     <section class="library" aria-labelledby="library-title">
       <div class="section-head">
         <div>
-          <div class="eyebrow">12 EPISODES</div>
-          <h2 id="library-title">從現在最需要的主題開始</h2>
+          <div class="eyebrow">EPISODE LIBRARY</div>
+          <h2 id="library-title">12 個主題，一個隨時可打開的工具箱</h2>
+          <p>每張卡片都整理了適合的使用情境、內容摘要與本集重點。</p>
         </div>
         <div class="filters" id="filters" aria-label="主題分類"></div>
       </div>
       <div class="episode-grid" id="episode-grid"></div>
     </section>
 
-    <section class="about">
-      <div class="about-label">ABOUT</div>
+    <section class="teacher-note" aria-labelledby="teacher-note-title">
+      <div class="note-mark">✦</div>
       <div>
-        <h2>不是一套要照順序「上完」的課</h2>
-        <p>比較像放在教室裡的一只工具箱。當情緒上來、關係卡住、事情越想越大，或不知道下一步在哪裡時，都能找到一集相對應的內容，作為理解、討論與陪伴的起點。</p>
+        <div class="eyebrow">FOR TEACHERS</div>
+        <h2 id="teacher-note-title">不是一套要照順序「上完」的課</h2>
+        <p>比較像放在教室裡的一只工具箱。孩子正在生氣、關係卡住、一直想不停、遇到挫折，或不知道下一步在哪裡時，都能找到相對應的一集，作為理解、討論與陪伴的起點。</p>
       </div>
     </section>
 
     <footer class="footer">
-      <span>傳愛成長工具箱</span>
-      <span>公益支持｜吳尊賢文教公益基金會</span>
+      <div>
+        <strong>傳愛成長工具箱</strong>
+        <span>Growth Toolkit</span>
+      </div>
+      <div class="footer-right">公益支持｜吳尊賢文教公益基金會</div>
     </footer>
   </main>
   <script src="/app.js"></script>
