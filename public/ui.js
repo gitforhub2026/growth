@@ -47,13 +47,7 @@ if (teacherNote) {
   const title = teacherNote.querySelector('h2');
   const copy = teacherNote.querySelector('p');
   if (title) title.textContent = '把工具放在手邊，需要時就有一個起點';
-  if (copy) copy.textContent = '有時候，一段陪伴不需要很長。也許是一張海報、一個問題，或一起聽完一集後的幾分鐘談話。只要孩子願意多說一點、老師多看懂一點，改變就已經開始。';
-}
-
-// Keep the embedded PDF available on mobile, with a simple fallback link below it.
-const mobileFallback = document.querySelector('.reader-mobile-fallback');
-if (mobileFallback) {
-  mobileFallback.innerHTML = '<span>若手機瀏覽器無法操作內嵌閱讀器，可另開完整教師手冊 ↗</span>';
+  if (copy) copy.textContent = '有時候，一段陪伴不一定要很長。也許是一張海報、一個問題，或一起聽完一集後的幾分鐘談話。只要孩子願意多說一點、老師多理解一點，一點點改變，也許就能從這裡慢慢開始。';
 }
 
 // Poster lightbox with previous / next navigation.
