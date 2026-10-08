@@ -1,14 +1,15 @@
 /* Accessibility-first typography overrides */
-body{font-size:18px;line-height:1.78}
-.brand strong{font-size:22px}.brand small{font-size:14px}.top-meta{font-size:16px}
-.eyebrow{font-size:15px}.lead{font-size:23px;line-height:1.8}
-.hero-meta span{font-size:17px}.hero-meta b{font-size:18px}
-.board-label{font-size:14px}.board-title{font-size:24px}.path-card strong{font-size:20px}.path-card small{font-size:16px}.path-card span{font-size:14px}
-.use-case strong{font-size:20px}.use-case p{font-size:18px;line-height:1.75}.use-no{font-size:14px}
-.player-kicker{font-size:14px}.player-title{font-size:30px}.player-desc{font-size:19px;line-height:1.7}.player-status{font-size:16px}.quick-play{font-size:18px}.quick-play-row span{font-size:16px}
-.section-head p{font-size:19px;line-height:1.75}.filter-btn{font-size:17px;padding:10px 15px}
-.episode-grid{grid-template-columns:repeat(2,minmax(0,1fr));gap:20px}
-.episode-card{min-height:0;padding:24px}.module{font-size:17px}.ep-no{font-size:16px}.duration{font-size:16px}.episode-card h3{font-size:30px;line-height:1.35}.summary{font-size:19px;line-height:1.8}.context{font-size:18px;line-height:1.75;padding:14px 15px}.tag{font-size:16px;padding:6px 10px}
-.episode-card details{display:block}.episode-card summary{font-size:18px;cursor:default;pointer-events:none;list-style:none}.episode-card summary:after{display:none}.points{font-size:18px;line-height:1.8;margin-top:12px;padding-left:22px}.play-hint{font-size:16px}.play-btn{font-size:17px;padding:11px 17px}
-.teacher-note h2{font-size:34px}.teacher-note p{font-size:19px;line-height:1.8}.footer{font-size:16px}.footer strong{font-size:20px}.footer span{font-size:14px}
-@media(max-width:760px){body{font-size:17px}.lead{font-size:20px}.episode-grid{grid-template-columns:1fr}.episode-card h3{font-size:27px}.summary,.context,.points{font-size:17px}.use-case p{font-size:17px}.player-title{font-size:26px}.player-desc{font-size:17px}.teacher-note p{font-size:17px}}
+body{font-size:20px;line-height:1.8}
+.brand strong{font-size:23px}.brand small{font-size:14px}.top-meta{font-size:17px}
+.eyebrow{font-size:16px}.lead{font-size:24px;line-height:1.82}
+.hero-meta span{font-size:18px}.hero-meta b{font-size:19px}
+.board-label{font-size:15px}.board-title{font-size:25px}.path-card strong{font-size:21px}.path-card small{font-size:17px;line-height:1.55}.path-card span{font-size:15px}
+.use-case strong{font-size:21px}.use-case p{font-size:19px;line-height:1.78}.use-no{font-size:15px}
+.player-kicker{font-size:15px}.player-title{font-size:32px}.player-desc{font-size:20px;line-height:1.72}.player-status{font-size:17px}.quick-play{font-size:19px}.quick-play-row span{font-size:17px}
+.section-head p{font-size:20px;line-height:1.78}.filter-btn{font-size:18px;padding:11px 16px}
+.episode-grid{grid-template-columns:repeat(2,minmax(0,1fr));gap:22px}
+.episode-card{min-height:0;padding:26px}.module{font-size:18px}.ep-no{font-size:17px}.duration{font-size:17px}.episode-card h3{font-size:31px;line-height:1.38}.summary{font-size:20px;line-height:1.82}.context{font-size:19px;line-height:1.78;padding:15px 16px}.tag{font-size:17px;padding:7px 11px}
+.episode-points{margin-top:16px;padding-top:16px;border-top:1px solid var(--line)}.points-title{font-size:20px;font-weight:900;color:var(--ink);margin-bottom:6px}.points{font-size:19px;line-height:1.82;margin:8px 0 0;padding-left:24px}.points li+li{margin-top:6px}
+.play-hint{font-size:17px}.play-btn{font-size:18px;padding:12px 18px}
+.teacher-note h2{font-size:35px}.teacher-note p{font-size:20px;line-height:1.82}.footer{font-size:17px}.footer strong{font-size:21px}.footer span{font-size:14px}
+@media(max-width:760px){body{font-size:18px}.lead{font-size:21px}.episode-grid{grid-template-columns:1fr}.episode-card{padding:21px}.episode-card h3{font-size:28px}.summary,.context,.points{font-size:18px}.points-title{font-size:19px}.use-case p{font-size:18px}.player-title{font-size:28px}.player-desc{font-size:18px}.teacher-note p{font-size:18px}}
