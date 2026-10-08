@@ -108,7 +108,7 @@ const playerDesc = document.querySelector("#player-desc");
 const playerStatus = document.querySelector("#player-status");
 const playerNumber = document.querySelector("#player-number");
 let activeModule = "全部";
-let activeEpisode = null;
+let activeEpisode = "01";
 
 function renderFilters(){
   filters.innerHTML = moduleOrder.map(name => `<button class="filter-btn ${name===activeModule?"active":""}" data-filter="${name}">${name}</button>`).join("");
@@ -136,10 +136,10 @@ function renderEpisodes(){
       <div class="play-row"><span class="play-hint">${ep.duration}</span><button class="play-btn" data-play="${ep.id}"><span>▶</span> 播放本集</button></div>
     </article>
   `).join("");
-  grid.querySelectorAll("[data-play]").forEach(btn => btn.addEventListener("click",()=>playEpisode(btn.dataset.play)));
+  grid.querySelectorAll("[data-play]").forEach(btn => btn.addEventListener("click",()=>selectEpisode(btn.dataset.play, true)));
 }
 
-function playEpisode(id){
+function selectEpisode(id, autoplay = false){
   const ep = episodes.find(item => item.id === id);
   if(!ep) return;
   activeEpisode = id;
@@ -147,14 +147,29 @@ function playEpisode(id){
   playerTitle.textContent = `EP ${ep.id}｜${ep.title}`;
   playerDesc.textContent = ep.summary;
   playerStatus.textContent = "";
-  player.src = `${AUDIO_BASE}/${encodeURIComponent(ep.file)}`;
+  const nextSrc = `${AUDIO_BASE}/${encodeURIComponent(ep.file)}`;
+  if(player.getAttribute("src") !== nextSrc){
+    player.src = nextSrc;
+    player.load();
+  }
   renderEpisodes();
-  document.querySelector("#player-panel").scrollIntoView({behavior:"smooth",block:"center"});
-  player.play().catch(()=>{});
+  if(autoplay){
+    document.querySelector("#player-panel").scrollIntoView({behavior:"smooth",block:"center"});
+    player.play().catch(()=>{
+      playerStatus.textContent = "可直接按播放器左側的播放鍵開始收聽。";
+    });
+  }
 }
 
+player.addEventListener("loadedmetadata",()=>{
+  playerStatus.textContent = "已載入，可以播放。";
+});
+player.addEventListener("canplay",()=>{
+  playerStatus.textContent = "";
+});
 player.addEventListener("error",()=>{
-  playerStatus.textContent = "聲音檔正在連線中。";
+  const code = player.error?.code || "unknown";
+  playerStatus.textContent = `音訊載入失敗（${code}）。`;
 });
 player.addEventListener("playing",()=>{
   playerStatus.textContent = "";
@@ -162,3 +177,4 @@ player.addEventListener("playing",()=>{
 
 renderFilters();
 renderEpisodes();
+selectEpisode("01", false);
