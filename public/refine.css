@@ -30,7 +30,7 @@
   background:#fff;
 }
 
-/* Teacher feedback / co-creation card. */
+/* Teacher suggestions / contact card. */
 .feedback-section{
   margin:28px 0 24px;
   padding:30px 32px;
@@ -80,7 +80,7 @@
   letter-spacing:-.03em;
   text-wrap:balance;
 }
-.feedback-copy p{
+.feedback-copy>p{
   margin:0;
   max-width:900px;
   color:#607580;
@@ -89,24 +89,92 @@
   text-wrap:pretty;
   line-break:strict;
 }
-.feedback-prompts{
-  display:flex;
-  flex-wrap:wrap;
-  gap:9px;
-  margin-top:19px;
+.feedback-form{
+  margin-top:22px;
+  display:grid;
+  gap:14px;
 }
-.feedback-prompts span{
-  display:inline-flex;
-  align-items:center;
-  min-height:36px;
-  padding:6px 12px;
-  border-radius:999px;
+.feedback-fields{
+  display:grid;
+  grid-template-columns:repeat(2,minmax(0,1fr));
+  gap:12px;
+}
+.feedback-form label{
+  display:grid;
+  gap:7px;
+  color:#315f70;
+  font-size:15px;
+  font-weight:900;
+}
+.feedback-form label span small{
+  margin-left:4px;
+  color:#8b9aa0;
+  font-size:12px;
+  font-weight:700;
+}
+.feedback-form input,
+.feedback-form textarea{
+  width:100%;
+  border:1px solid #ccdee4;
+  border-radius:14px;
+  background:rgba(255,255,255,.96);
+  color:#234c5d;
+  padding:12px 14px;
+  font:inherit;
+  font-size:17px;
+  line-height:1.55;
+  box-shadow:inset 0 1px 0 rgba(255,255,255,.75);
+  transition:border-color .16s ease,box-shadow .16s ease,background .16s ease;
+}
+.feedback-form textarea{
+  min-height:132px;
+  resize:vertical;
+}
+.feedback-form input::placeholder,
+.feedback-form textarea::placeholder{color:#a3afb3}
+.feedback-form input:focus,
+.feedback-form textarea:focus{
+  outline:0;
+  border-color:#67abc3;
   background:#fff;
-  border:1px solid #d7e7eb;
-  color:#356d83;
-  font-size:14px;
-  font-weight:800;
+  box-shadow:0 0 0 4px rgba(103,171,195,.13);
 }
+.feedback-honeypot{
+  position:absolute!important;
+  left:-9999px!important;
+  width:1px!important;
+  height:1px!important;
+  overflow:hidden!important;
+}
+.feedback-submit-row{
+  display:flex;
+  align-items:center;
+  gap:14px;
+  flex-wrap:wrap;
+}
+.feedback-submit{
+  border:0;
+  border-radius:999px;
+  min-height:46px;
+  padding:10px 20px;
+  background:#2b7da0;
+  color:#fff;
+  font-size:16px;
+  font-weight:900;
+  cursor:pointer;
+  box-shadow:0 9px 20px rgba(43,125,160,.14);
+  transition:transform .16s ease,background .16s ease,opacity .16s ease;
+}
+.feedback-submit:hover{transform:translateY(-1px);background:#236d8d}
+.feedback-submit:disabled{cursor:wait;opacity:.65;transform:none}
+.feedback-status{
+  min-height:24px;
+  font-size:15px;
+  font-weight:800;
+  color:#607580;
+}
+.feedback-status.is-success{color:#347257}
+.feedback-status.is-error{color:#a45143}
 
 @media(max-width:760px){
   .topbar{
@@ -159,8 +227,9 @@
     font-size:24px;
   }
   .feedback-copy h2{font-size:30px}
-  .feedback-copy p{font-size:18px;line-height:1.75}
-  .feedback-prompts{display:grid;grid-template-columns:repeat(2,minmax(0,1fr));gap:8px}
-  .feedback-prompts span{justify-content:center;text-align:center;font-size:13px;padding:7px 9px}
-  .feedback-prompts span:last-child{grid-column:1 / -1}
+  .feedback-copy>p{font-size:18px;line-height:1.75}
+  .feedback-fields{grid-template-columns:1fr}
+  .feedback-form input,.feedback-form textarea{font-size:16px}
+  .feedback-submit{width:100%;font-size:16px}
+  .feedback-status{width:100%;text-align:center;font-size:14px}
 }
