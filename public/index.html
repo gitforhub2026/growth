@@ -138,12 +138,21 @@
     <section class="feedback-section" aria-labelledby="feedback-title">
       <div class="feedback-mark" aria-hidden="true">✎</div>
       <div class="feedback-copy">
-        <div class="eyebrow">TEACHER FEEDBACK</div>
-        <h2 id="feedback-title">也想聽聽老師的聲音</h2>
-        <p>如果有哪個主題特別好用、哪裡還可以更清楚，或希望下一次多做哪一類教材，都很歡迎告訴我們。來自教室現場的每一個建議，都會讓下一份工具更貼近孩子，也更貼近老師真正需要的地方。</p>
-        <div class="feedback-prompts" aria-label="回饋方向">
-          <span>想看的新主題</span><span>課堂使用心得</span><span>希望補充的教材</span>
-        </div>
+        <div class="eyebrow">CONTACT · SUGGESTIONS</div>
+        <h2 id="feedback-title">歡迎留下建議</h2>
+        <p>如果有使用心得、想看的主題，或希望我們補充哪一類教材，都可以直接告訴我們。</p>
+        <form class="feedback-form" id="feedback-form">
+          <div class="feedback-fields">
+            <label><span>怎麼稱呼您？ <small>選填</small></span><input type="text" name="name" maxlength="80" autocomplete="name" placeholder="老師／姓名"></label>
+            <label><span>Email／聯絡方式 <small>選填</small></span><input type="text" name="contact" maxlength="160" autocomplete="email" placeholder="方便回覆時再留下即可"></label>
+          </div>
+          <label class="feedback-message"><span>想告訴我們什麼？</span><textarea name="message" required minlength="2" maxlength="2500" rows="5" placeholder="教材建議、使用心得、希望增加的主題……"></textarea></label>
+          <label class="feedback-honeypot" aria-hidden="true">網站<input type="text" name="website" tabindex="-1" autocomplete="off"></label>
+          <div class="feedback-submit-row">
+            <button class="feedback-submit" type="submit">送出建議</button>
+            <div class="feedback-status" id="feedback-status" role="status" aria-live="polite"></div>
+          </div>
+        </form>
       </div>
     </section>
 
