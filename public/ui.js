@@ -50,6 +50,54 @@ if (teacherNote) {
   if (copy) copy.textContent = '有時候，一段陪伴不一定要很長。也許是一張海報、一個問題，或一起聽完一集後的幾分鐘談話。只要孩子願意多說一點、老師多理解一點，一點點改變，也許就能從這裡慢慢開始。';
 }
 
+// Simple contact form. Messages are stored privately in the bound R2 bucket.
+const feedbackForm = document.querySelector('#feedback-form');
+const feedbackStatus = document.querySelector('#feedback-status');
+if (feedbackForm && feedbackStatus) {
+  feedbackForm.addEventListener('submit', async (event) => {
+    event.preventDefault();
+    const submitButton = feedbackForm.querySelector('.feedback-submit');
+    const formData = new FormData(feedbackForm);
+    const payload = {
+      name: String(formData.get('name') || '').trim(),
+      contact: String(formData.get('contact') || '').trim(),
+      message: String(formData.get('message') || '').trim(),
+      website: String(formData.get('website') || '').trim(),
+    };
+
+    if (payload.message.length < 2) {
+      feedbackStatus.textContent = '請留下一點想告訴我們的內容。';
+      feedbackStatus.className = 'feedback-status is-error';
+      return;
+    }
+
+    submitButton.disabled = true;
+    submitButton.textContent = '送出中…';
+    feedbackStatus.textContent = '';
+    feedbackStatus.className = 'feedback-status';
+
+    try {
+      const response = await fetch('/feedback', {
+        method: 'POST',
+        headers: { 'content-type': 'application/json' },
+        body: JSON.stringify(payload),
+      });
+      const result = await response.json().catch(() => ({}));
+      if (!response.ok || !result.ok) throw new Error(result.message || '送出失敗');
+
+      feedbackForm.reset();
+      feedbackStatus.textContent = result.message || '謝謝你的建議，我們收到了。';
+      feedbackStatus.className = 'feedback-status is-success';
+    } catch (error) {
+      feedbackStatus.textContent = error?.message || '暫時無法送出，請稍後再試。';
+      feedbackStatus.className = 'feedback-status is-error';
+    } finally {
+      submitButton.disabled = false;
+      submitButton.textContent = '送出建議';
+    }
+  });
+}
+
 // Poster lightbox with previous / next navigation.
 const dialog = document.querySelector('#image-dialog');
 const dialogImage = document.querySelector('#dialog-image');
