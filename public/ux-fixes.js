@@ -36,6 +36,29 @@
     return `${Math.floor(whole / 60)}:${String(whole % 60).padStart(2, '0')}`;
   }
 
+  function activeId() {
+    try { return typeof activeEpisode !== 'undefined' ? activeEpisode : null; }
+    catch { return null; }
+  }
+
+  function syncCardButtons() {
+    const playing = !player.paused && !player.ended;
+    const id = activeId();
+    episodeGrid.querySelectorAll('.play-btn[data-play]').forEach((button) => {
+      const isCurrent = button.dataset.play === id;
+      if (isCurrent && playing) {
+        button.innerHTML = '<span>❚❚</span> 暫停';
+        button.setAttribute('aria-label', '暫停本集');
+      } else if (isCurrent && player.currentTime > 0 && !player.ended) {
+        button.innerHTML = '<span>▶</span> 繼續播放';
+        button.setAttribute('aria-label', '繼續播放本集');
+      } else {
+        button.innerHTML = '<span>▶</span> 播放本集';
+        button.setAttribute('aria-label', '播放本集');
+      }
+    });
+  }
+
   function updateMiniContent() {
     const playing = !player.paused && !player.ended;
     miniToggle.textContent = playing ? '❚❚' : '▶';
@@ -49,6 +72,7 @@
       miniSeek.value = '0';
       miniTime.textContent = `${formatTime(player.currentTime)} / --:--`;
     }
+    syncCardButtons();
   }
 
   function updateMiniVisibility() {
@@ -66,8 +90,9 @@
   }, { threshold: [0, 0.18, 0.5] });
   observer.observe(mainPanel);
 
-  // The original card handler scrolls the full player into view. Intercept that
-  // action, keep the reader anchored, and start playback in place.
+  // The original card handler scrolls the full player into view. Intercept it.
+  // Tapping the current card again toggles pause/resume in place; choosing a new
+  // episode switches tracks without moving the reader's viewport.
   document.addEventListener('click', (event) => {
     const button = event.target.closest?.('#episode-grid .play-btn[data-play]');
     if (!button) return;
@@ -78,12 +103,22 @@
 
     userActivatedAudio = true;
     const readingPosition = window.scrollY;
-    selectEpisode(button.dataset.play, true, false);
+    const sameEpisode = button.dataset.play === activeId();
+
+    if (sameEpisode && !player.paused && !player.ended) {
+      player.pause();
+    } else if (sameEpisode && player.currentSrc) {
+      player.play().catch(() => {});
+    } else {
+      selectEpisode(button.dataset.play, true, false);
+    }
+
     updateMiniContent();
     updateMiniVisibility();
 
     requestAnimationFrame(() => {
       window.scrollTo({ top: readingPosition, left: 0, behavior: 'auto' });
+      updateMiniContent();
       updateMiniVisibility();
     });
   }, true);
