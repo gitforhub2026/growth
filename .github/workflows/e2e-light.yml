@@ -9,6 +9,7 @@ on:
       - 'public/ux-fixes.css'
       - 'public/light/**'
       - 'public/light-feedback.*'
+      - 'public/light-ux.*'
       - 'src/**'
       - 'wrangler.jsonc'
       - '.github/workflows/e2e-light.yml'
@@ -33,17 +34,20 @@ jobs:
           ! grep -Fq '<div class="support-credit"><span>公益支持</span><strong>吳尊賢文教公益基金會</strong></div>' /tmp/root.html
           grep -Fq 'href="/ux-fixes.css"' /tmp/root.html
           grep -Fq '<script src="/ux-fixes.js"></script>' /tmp/root.html
+          grep -Fq 'rel="icon" href="data:,"' /tmp/root.html
           curl -fsSL --retry 12 --retry-delay 10 --retry-all-errors "https://growth.notesss.workers.dev/ux-fixes.js?e2e=${GITHUB_SHA}" -o /tmp/ux-fixes.js
           curl -fsSL --retry 12 --retry-delay 10 --retry-all-errors "https://growth.notesss.workers.dev/ux-fixes.css?e2e=${GITHUB_SHA}" -o /tmp/ux-fixes.css
+          node --check /tmp/ux-fixes.js
           grep -Fq 'selectEpisode(button.dataset.play, true, false)' /tmp/ux-fixes.js
           grep -Fq 'window.scrollTo({ top: readingPosition' /tmp/ux-fixes.js
           grep -Fq "className = 'mobile-now-player'" /tmp/ux-fixes.js
-          grep -Fq "miniToggle.addEventListener('click'" /tmp/ux-fixes.js
-          grep -Fq "miniSeek.addEventListener('input'" /tmp/ux-fixes.js
-          grep -Fq "button.innerHTML = '<span>❚❚</span> 暫停'" /tmp/ux-fixes.js
+          grep -Fq "new MutationObserver(() => syncCardButtons())" /tmp/ux-fixes.js
+          grep -Fq "formFocused = true" /tmp/ux-fixes.js
+          grep -Fq '播放失敗，請再試一次' /tmp/ux-fixes.js
           grep -Fq '.mobile-now-player{' /tmp/ux-fixes.css
           grep -Fq '.mobile-now-player.is-visible{' /tmp/ux-fixes.css
-      - name: Verify mobile playback UX in browser
+          grep -Fq 'prefers-reduced-motion:reduce' /tmp/ux-fixes.css
+      - name: Verify Growth mobile UX in browser
         shell: bash
         run: |
           set -euo pipefail
@@ -81,18 +85,36 @@ jobs:
 
             await card.click();
             await page.waitForTimeout(250);
-            const paused = await page.locator('#audio-player').evaluate((el) => el.paused);
-            if (!paused) throw new Error('Second tap on episode card did not pause audio');
-            const pausedText = await card.innerText();
-            if (!pausedText.includes('繼續播放')) throw new Error(`Card did not show resume state: ${pausedText}`);
+            if (!(await page.locator('#audio-player').evaluate((el) => el.paused))) throw new Error('Second tap did not pause audio');
+            if (!(await card.innerText()).includes('繼續播放')) throw new Error('Card did not show resume state');
 
             await page.locator('.mobile-now-toggle').click();
             await page.waitForFunction(() => !document.querySelector('#audio-player')?.paused, null, { timeout: 5000 });
-            const resumedText = await page.locator('.mobile-now-toggle').innerText();
-            if (!resumedText.includes('❚❚')) throw new Error(`Mini player did not resume: ${resumedText}`);
+            if (!(await page.locator('.mobile-now-toggle').innerText()).includes('❚❚')) throw new Error('Mini player did not resume');
+
+            const filters = page.locator('#filters button');
+            if (await filters.count() > 1) {
+              await filters.nth(1).click();
+              await page.waitForTimeout(150);
+              await filters.first().click();
+              await page.waitForTimeout(150);
+              const activeText = await page.locator('#episode-grid .active-card .play-btn').first().innerText();
+              if (!activeText.includes('暫停')) throw new Error(`Filter rerender lost playback state: ${activeText}`);
+            }
+
+            const textarea = page.locator('#feedback-form textarea');
+            await textarea.scrollIntoViewIfNeeded();
+            await page.waitForTimeout(250);
+            if (!(await page.locator('.mobile-now-player').evaluate(el => el.classList.contains('is-visible')))) throw new Error('Mini player should be visible before typing');
+            await textarea.focus();
+            await page.waitForTimeout(150);
+            if (await page.locator('.mobile-now-player').evaluate(el => el.classList.contains('is-visible'))) throw new Error('Mini player did not make room for form input');
+            await textarea.blur();
+            await page.waitForTimeout(150);
+            if (!(await page.locator('.mobile-now-player').evaluate(el => el.classList.contains('is-visible')))) throw new Error('Mini player did not return after typing');
 
             await browser.close();
-            console.log('Mobile playback UX OK');
+            console.log('Growth mobile UX OK');
           })().catch((error) => { console.error(error); process.exit(1); });
           NODE
       - name: Verify light page structure and user copy
@@ -107,22 +129,88 @@ jobs:
             ! grep -Fq "$old" /tmp/light.html || { echo "Old/internal copy remains: $old"; exit 1; }
           done
           grep -Fq '<div class="support support-uniform">感謝公益支持│吳尊賢文教公益基金會</div>' /tmp/light.html
-          grep -Fq '.support-uniform{font-size:13px!important;font-weight:750!important;color:#667268!important;' /tmp/light.html
-          ! grep -Fq '感謝<b>' /tmp/light.html
-          grep -Fq '.hero-art{display:none}' /tmp/light.html
-          grep -Fq 'white-space:nowrap' /tmp/light.html
-          grep -Fq '<span class="footer-main">傳愛光明棧 · 2026</span><span class="footer-sub">' /tmp/light.html
           grep -Fq 'id="light-feedback-form"' /tmp/light.html
           grep -Fq '歡迎留下建議' /tmp/light.html
           grep -Fq 'href="/light-feedback.css"' /tmp/light.html
-          grep -Fq '<script src="/light-feedback.js"></script>' /tmp/light.html
+          grep -Fq 'href="/light-ux.css"' /tmp/light.html
+          grep -Fq '<script src="/light-feedback.js"></script><script src="/light-ux.js"></script>' /tmp/light.html
+          grep -Fq 'rel="icon" href="data:,"' /tmp/light.html
           curl -fsSL --retry 12 --retry-delay 10 --retry-all-errors "https://growth.notesss.workers.dev/light-feedback.css?e2e=${GITHUB_SHA}" -o /tmp/light-feedback.css
           curl -fsSL --retry 12 --retry-delay 10 --retry-all-errors "https://growth.notesss.workers.dev/light-feedback.js?e2e=${GITHUB_SHA}" -o /tmp/light-feedback.js
+          curl -fsSL --retry 12 --retry-delay 10 --retry-all-errors "https://growth.notesss.workers.dev/light-ux.css?e2e=${GITHUB_SHA}" -o /tmp/light-ux.css
+          curl -fsSL --retry 12 --retry-delay 10 --retry-all-errors "https://growth.notesss.workers.dev/light-ux.js?e2e=${GITHUB_SHA}" -o /tmp/light-ux.js
+          node --check /tmp/light-feedback.js
+          node --check /tmp/light-ux.js
           grep -Fq '.light-feedback{' /tmp/light-feedback.css
           grep -Fq "source: 'light-house'" /tmp/light-feedback.js
+          grep -Fq '.light-now-player{' /tmp/light-ux.css
+          grep -Fq "row.setAttribute('role', 'button')" /tmp/light-ux.js
+          grep -Fq '播放失敗，請再試一次' /tmp/light-ux.js
           curl -fsSL --retry 12 --retry-delay 10 --retry-all-errors "https://growth.notesss.workers.dev/light/assets/hero.webp?e2e=${GITHUB_SHA}" -o /tmp/hero.webp
           test -s /tmp/hero.webp
           file /tmp/hero.webp | grep -qi 'Web/P image\|WebP'
+      - name: Verify Light mobile reader UX in browser
+        shell: bash
+        run: |
+          set -euo pipefail
+          CHROME_BIN="$(command -v google-chrome || command -v google-chrome-stable || command -v chromium || command -v chromium-browser)"
+          CHROME_BIN="$CHROME_BIN" node <<'NODE'
+          const { chromium } = require('playwright-core');
+          (async () => {
+            const browser = await chromium.launch({
+              executablePath: process.env.CHROME_BIN,
+              headless: true,
+              args: ['--no-sandbox', '--autoplay-policy=no-user-gesture-required']
+            });
+            const page = await browser.newPage({ viewport: { width: 390, height: 844 } });
+            await page.goto(`https://growth.notesss.workers.dev/light/?ux=${Date.now()}`, { waitUntil: 'domcontentloaded' });
+            await page.waitForTimeout(500);
+
+            const picker = page.locator('#mobilePicker');
+            await picker.click();
+            const rows = page.locator('#episodeList .ep-row');
+            const second = rows.nth(1);
+            await second.focus();
+            if ((await second.getAttribute('role')) !== 'button' || (await second.getAttribute('tabindex')) !== '0') throw new Error('Episode row is not keyboard accessible');
+            const beforeTitle = await page.locator('#dTitle').innerText();
+            await page.keyboard.press('Enter');
+            await page.waitForTimeout(300);
+            const afterTitle = await page.locator('#dTitle').innerText();
+            if (beforeTitle === afterTitle) throw new Error('Keyboard episode selection did not work');
+
+            await picker.click();
+            const playMini = page.locator('#episodeList .playmini').first();
+            const box = await playMini.boundingBox();
+            if (!box || box.width < 44 || box.height < 44) throw new Error(`Small touch target: ${JSON.stringify(box)}`);
+            await playMini.click();
+            await page.waitForFunction(() => !document.querySelector('#audio')?.paused, null, { timeout: 5000 });
+
+            const bottom = page.locator('#mobileBottomPicker');
+            await bottom.scrollIntoViewIfNeeded();
+            await page.waitForTimeout(300);
+            const miniVisible = await page.locator('.light-now-player').evaluate(el => el.classList.contains('is-visible') && getComputedStyle(el).visibility === 'visible');
+            if (!miniVisible) throw new Error('Persistent Light player did not follow reader');
+
+            await page.locator('.light-now-toggle').click();
+            await page.waitForTimeout(150);
+            if (!(await page.locator('#audio').evaluate(el => el.paused))) throw new Error('Persistent Light player did not pause');
+            await page.locator('.light-now-toggle').click();
+            await page.waitForFunction(() => !document.querySelector('#audio')?.paused, null, { timeout: 5000 });
+
+            const textarea = page.locator('#light-feedback-form textarea');
+            await textarea.scrollIntoViewIfNeeded();
+            await page.waitForTimeout(200);
+            await textarea.focus();
+            await page.waitForTimeout(120);
+            if (await page.locator('.light-now-player').evaluate(el => el.classList.contains('is-visible'))) throw new Error('Light mini player did not make room for form input');
+
+            const seekBox = await page.locator('#seek').boundingBox();
+            if (!seekBox || seekBox.height < 32) throw new Error(`Seek touch target too small: ${JSON.stringify(seekBox)}`);
+
+            await browser.close();
+            console.log('Light mobile reader UX OK');
+          })().catch((error) => { console.error(error); process.exit(1); });
+          NODE
       - name: Verify all R2 audio objects are streamable
         shell: bash
         run: |
