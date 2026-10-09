@@ -158,6 +158,8 @@ const LIGHT_FEEDBACK_MARKUP = `
   </div>
 </section>`;
 
+const EMPTY_FAVICON = '<link rel="icon" href="data:,">';
+
 async function serveAssetPage(request, env, url) {
   const response = await env.ASSETS.fetch(request);
   if (request.method !== "GET" || !response.ok) return response;
@@ -171,7 +173,7 @@ async function serveAssetPage(request, env, url) {
     return new HTMLRewriter()
       .on("head", {
         element(element) {
-          element.append('<link rel="stylesheet" href="/ux-fixes.css">', { html: true });
+          element.append(`${EMPTY_FAVICON}<link rel="stylesheet" href="/ux-fixes.css">`, { html: true });
         },
       })
       .on("body", {
@@ -186,7 +188,7 @@ async function serveAssetPage(request, env, url) {
     return new HTMLRewriter()
       .on("head", {
         element(element) {
-          element.append('<link rel="stylesheet" href="/light-feedback.css">', { html: true });
+          element.append(`${EMPTY_FAVICON}<link rel="stylesheet" href="/light-feedback.css"><link rel="stylesheet" href="/light-ux.css">`, { html: true });
         },
       })
       .on("footer.footer", {
@@ -196,7 +198,7 @@ async function serveAssetPage(request, env, url) {
       })
       .on("body", {
         element(element) {
-          element.append('<script src="/light-feedback.js"></script>', { html: true });
+          element.append('<script src="/light-feedback.js"></script><script src="/light-ux.js"></script>', { html: true });
         },
       })
       .transform(response);
