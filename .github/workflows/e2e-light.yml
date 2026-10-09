@@ -6,6 +6,7 @@ on:
     paths:
       - 'public/index.html'
       - 'public/ux-fixes.js'
+      - 'public/ux-fixes.css'
       - 'public/light/**'
       - 'public/light-feedback.*'
       - 'src/**'
@@ -30,10 +31,17 @@ jobs:
           grep -Fq '<div class="support-credit support-uniform">感謝公益支持│吳尊賢文教公益基金會</div>' /tmp/root.html
           grep -Fq '.support-uniform{font-size:13px!important;font-weight:750!important;color:#667268!important;' /tmp/root.html
           ! grep -Fq '<div class="support-credit"><span>公益支持</span><strong>吳尊賢文教公益基金會</strong></div>' /tmp/root.html
+          grep -Fq 'href="/ux-fixes.css"' /tmp/root.html
           grep -Fq '<script src="/ux-fixes.js"></script>' /tmp/root.html
           curl -fsSL --retry 12 --retry-delay 10 --retry-all-errors "https://growth.notesss.workers.dev/ux-fixes.js?e2e=${GITHUB_SHA}" -o /tmp/ux-fixes.js
+          curl -fsSL --retry 12 --retry-delay 10 --retry-all-errors "https://growth.notesss.workers.dev/ux-fixes.css?e2e=${GITHUB_SHA}" -o /tmp/ux-fixes.css
           grep -Fq 'selectEpisode(button.dataset.play, true, false)' /tmp/ux-fixes.js
           grep -Fq 'window.scrollTo({ top: readingPosition' /tmp/ux-fixes.js
+          grep -Fq "className = 'mobile-now-player'" /tmp/ux-fixes.js
+          grep -Fq "miniToggle.addEventListener('click'" /tmp/ux-fixes.js
+          grep -Fq "miniSeek.addEventListener('input'" /tmp/ux-fixes.js
+          grep -Fq '.mobile-now-player{' /tmp/ux-fixes.css
+          grep -Fq '.mobile-now-player.is-visible{' /tmp/ux-fixes.css
       - name: Verify light page structure and user copy
         shell: bash
         run: |
