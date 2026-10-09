@@ -1,6 +1,9 @@
 function mimeType(key) {
   const k = key.toLowerCase();
   if (k.endsWith(".m4a")) return "audio/mp4";
+  if (k.endsWith(".mp3")) return "audio/mpeg";
+  if (k.endsWith(".aac")) return "audio/aac";
+  if (k.endsWith(".wav")) return "audio/wav";
   if (k.endsWith(".webp")) return "image/webp";
   if (k.endsWith(".png")) return "image/png";
   if (k.endsWith(".jpg") || k.endsWith(".jpeg")) return "image/jpeg";
@@ -136,11 +139,6 @@ export default {
 
     if (url.pathname === "/audio-health") return health(env);
     if (url.pathname === "/feedback") return saveFeedback(request, env);
-    if (url.pathname === "/__light-audio-index") {
-      if (!env.LIGHT_AUDIO) return json({ ok: false, objects: [] }, 503);
-      const listed = await env.LIGHT_AUDIO.list({ limit: 1000 });
-      return json({ ok: true, objects: listed.objects.map(o => ({ key: o.key, size: o.size, uploaded: o.uploaded })) });
-    }
 
     if (url.pathname.startsWith("/audio/")) {
       let key;
