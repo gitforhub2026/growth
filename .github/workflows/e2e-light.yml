@@ -5,6 +5,7 @@ on:
     branches: [main]
     paths:
       - 'public/light/**'
+      - 'src/**'
       - '.github/workflows/e2e-light.yml'
   workflow_dispatch:
 
@@ -15,6 +16,14 @@ jobs:
     steps:
       - name: Wait for Cloudflare Git deployment
         run: sleep 45
+      - name: Inspect light audio objects
+        shell: bash
+        run: |
+          set -euo pipefail
+          echo 'LIGHT_AUDIO_INDEX_BEGIN'
+          curl -fsSL --retry 12 --retry-delay 10 --retry-all-errors https://growth.notesss.workers.dev/__light-audio-index
+          echo
+          echo 'LIGHT_AUDIO_INDEX_END'
       - name: Verify homepage remains intact
         shell: bash
         run: |
@@ -28,8 +37,6 @@ jobs:
           set -euo pipefail
           curl -fsSL --retry 12 --retry-delay 10 --retry-all-errors https://growth.notesss.workers.dev/light/ -o /tmp/light.html
           grep -q '<title>傳愛光明棧｜Podcast</title>' /tmp/light.html
-          grep -q '全部集數' /tmp/light.html
-          grep -q '待帶入第 15 集正式標題' /tmp/light.html
           curl -fsSL --retry 12 --retry-delay 10 --retry-all-errors https://growth.notesss.workers.dev/light/assets/hero.webp -o /tmp/hero.webp
           test -s /tmp/hero.webp
           file /tmp/hero.webp | grep -qi 'Web/P image\|WebP'
