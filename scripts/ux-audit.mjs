@@ -99,7 +99,7 @@ for (const site of sites) {
       const axe = await new AxeBuilder({ page }).withTags(['wcag2a','wcag2aa','wcag21a','wcag21aa']).analyze();
       seriousAxe = axe.violations
         .filter(v => ['critical','serious'].includes(v.impact))
-        .map(v => ({ id: v.id, impact: v.impact, help: v.help, count: v.nodes.length, targets: v.nodes.slice(0, 5).map(n => n.target) }));
+        .map(v => ({ id: v.id, impact: v.impact, help: v.help, count: v.nodes.length, targets: v.nodes.slice(0, 8).map(n => n.target) }));
     } catch (error) {
       seriousAxe = [{ id: 'axe-run-error', impact: 'critical', help: String(error), count: 1, targets: [] }];
     }
@@ -178,9 +178,9 @@ for (const site of sites) {
   await picker.click();
   result.checks.pickerOpens = await page.locator('#episodeList').evaluate(el => el.classList.contains('mobile-open'));
 
-  const second = page.locator('#episodeList .ep-row').nth(1);
-  await second.focus();
-  result.checks.episodeRowsKeyboardAccessible = (await second.getAttribute('role')) === 'button' && (await second.getAttribute('tabindex')) === '0';
+  const secondMeta = page.locator('#episodeList .ep-row').nth(1).locator('.ep-meta');
+  await secondMeta.focus();
+  result.checks.episodeRowsKeyboardAccessible = (await secondMeta.getAttribute('role')) === 'button' && (await secondMeta.getAttribute('tabindex')) === '0';
   const beforeTitle = await page.locator('#dTitle').innerText();
   await page.keyboard.press('Enter'); await page.waitForTimeout(180);
   result.checks.keyboardSelectionWorks = beforeTitle !== await page.locator('#dTitle').innerText();
@@ -191,6 +191,14 @@ for (const site of sites) {
   result.checks.playTargetAtLeast44 = Boolean(playBox && playBox.width >= 44 && playBox.height >= 44);
   await playMini.click(); await page.waitForTimeout(450);
   result.checks.miniPlayStarts = !(await page.locator('#audio').evaluate(el => el.paused));
+  await page.waitForTimeout(300);
+  const t1 = await page.locator('#audio').evaluate(el => el.currentTime);
+  await playMini.click(); await page.waitForTimeout(120);
+  result.checks.listPlayPausesCurrent = await page.locator('#audio').evaluate(el => el.paused);
+  const pausedAt = await page.locator('#audio').evaluate(el => el.currentTime);
+  await playMini.click(); await page.waitForTimeout(220);
+  const resumedAt = await page.locator('#audio').evaluate(el => el.currentTime);
+  result.checks.listPlayResumesWithoutRestart = resumedAt >= Math.max(0, pausedAt - 0.15) && pausedAt >= Math.max(0, t1 - 0.15);
 
   await page.locator('#mobileBottomPicker').scrollIntoViewIfNeeded(); await page.waitForTimeout(250);
   result.checks.persistentPlayerVisible = await page.locator('.light-now-player').evaluate(el => el.classList.contains('is-visible'));
@@ -208,6 +216,56 @@ for (const site of sites) {
   result.checks.crossLinkToGrowth = (await page.locator('.series-switcher a[href="/"]').count()) > 0;
 
   await page.screenshot({ path: path.join(OUT, 'light-mobile-interaction.png'), fullPage: false });
+  report.functional.push(result);
+  await context.close();
+}
+
+// Growth desktop: core controls, navigation, and embedded guide.
+{
+  const context = await browser.newContext({ viewport: { width: 1440, height: 1000 } });
+  const page = await context.newPage();
+  await page.goto(`${BASE}/?uxdesktop=${Date.now()}`, { waitUntil: 'domcontentloaded' });
+  await page.waitForTimeout(600);
+  const result = { site: 'growth', viewport: 'desktop', checks: {} };
+  result.checks.headerSticky = await page.locator('.topbar').evaluate(el => getComputedStyle(el).position === 'sticky');
+  result.checks.crossLinkToLight = (await page.locator('.series-switcher a[href="/light/"]').count()) > 0;
+  result.checks.manualVisible = await page.locator('.manual-reader iframe').isVisible().catch(() => false);
+  const card = page.locator('#episode-grid .play-btn[data-play]').first();
+  await card.scrollIntoViewIfNeeded();
+  const before = await page.evaluate(() => scrollY);
+  await card.click(); await page.waitForTimeout(450);
+  const after = await page.evaluate(() => scrollY);
+  result.checks.playDoesNotJump = Math.abs(after - before) <= 12;
+  result.checks.cardShowsPause = (await card.innerText()).includes('暫停');
+  await card.click(); await page.waitForTimeout(100);
+  result.checks.cardPauses = await page.locator('#audio-player').evaluate(el => el.paused);
+  report.functional.push(result);
+  await context.close();
+}
+
+// Light House desktop: sticky browse list and same-track pause/resume semantics.
+{
+  const context = await browser.newContext({ viewport: { width: 1440, height: 1000 } });
+  const page = await context.newPage();
+  await page.goto(`${BASE}/light/?uxdesktop=${Date.now()}`, { waitUntil: 'domcontentloaded' });
+  await page.waitForTimeout(600);
+  const result = { site: 'light', viewport: 'desktop', checks: {} };
+  result.checks.headerFixed = await page.locator('.site-header').evaluate(el => getComputedStyle(el).position === 'fixed');
+  result.checks.episodeListSticky = await page.locator('#episodeList').evaluate(el => getComputedStyle(el).position === 'sticky');
+  result.checks.crossLinkToGrowth = (await page.locator('.series-switcher a[href="/"]').count()) > 0;
+  const playMini = page.locator('#episodeList .playmini').first();
+  await playMini.click(); await page.waitForTimeout(450);
+  result.checks.playStarts = !(await page.locator('#audio').evaluate(el => el.paused));
+  await page.waitForTimeout(250);
+  await playMini.click(); await page.waitForTimeout(100);
+  const pausedAt = await page.locator('#audio').evaluate(el => el.currentTime);
+  result.checks.listPlayPauses = await page.locator('#audio').evaluate(el => el.paused);
+  await playMini.click(); await page.waitForTimeout(180);
+  const resumedAt = await page.locator('#audio').evaluate(el => el.currentTime);
+  result.checks.listPlayResumesWithoutRestart = resumedAt >= Math.max(0, pausedAt - 0.15);
+  const speedBefore = await page.locator('#speedBtn').innerText();
+  await page.locator('#speedBtn').click();
+  result.checks.speedControlWorks = speedBefore !== await page.locator('#speedBtn').innerText();
   report.functional.push(result);
   await context.close();
 }
