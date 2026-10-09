@@ -27,7 +27,8 @@ const browser = await chromium.launch({
 
 for (const site of sites) {
   for (const vp of viewports) {
-    const page = await browser.newPage({ viewport: { width: vp.width, height: vp.height } });
+    const context = await browser.newContext({ viewport: { width: vp.width, height: vp.height } });
+    const page = await context.newPage();
     const consoleErrors = [];
     const pageErrors = [];
     const requestFailures = [];
@@ -93,20 +94,26 @@ for (const site of sites) {
       };
     }, { mobile: vp.width <= 680 });
 
-    const axe = await new AxeBuilder({ page }).withTags(['wcag2a','wcag2aa','wcag21a','wcag21aa']).analyze();
-    const seriousAxe = axe.violations
-      .filter(v => ['critical','serious'].includes(v.impact))
-      .map(v => ({ id: v.id, impact: v.impact, help: v.help, count: v.nodes.length, targets: v.nodes.slice(0, 5).map(n => n.target) }));
+    let seriousAxe = [];
+    try {
+      const axe = await new AxeBuilder({ page }).withTags(['wcag2a','wcag2aa','wcag21a','wcag21aa']).analyze();
+      seriousAxe = axe.violations
+        .filter(v => ['critical','serious'].includes(v.impact))
+        .map(v => ({ id: v.id, impact: v.impact, help: v.help, count: v.nodes.length, targets: v.nodes.slice(0, 5).map(n => n.target) }));
+    } catch (error) {
+      seriousAxe = [{ id: 'axe-run-error', impact: 'critical', help: String(error), count: 1, targets: [] }];
+    }
 
     await page.screenshot({ path: path.join(OUT, `${site.name}-${vp.name}.png`), fullPage: true });
     report.runs.push({ site: site.name, viewport: vp, url, ...dom, consoleErrors, pageErrors, requestFailures, seriousAxe });
-    await page.close();
+    await context.close();
   }
 }
 
 // Growth: real mobile journey.
 {
-  const page = await browser.newPage({ viewport: { width: 390, height: 844 } });
+  const context = await browser.newContext({ viewport: { width: 390, height: 844 } });
+  const page = await context.newPage();
   await page.goto(`${BASE}/?uxflow=${Date.now()}`, { waitUntil: 'domcontentloaded' });
   await page.waitForTimeout(700);
   const result = { site: 'growth', viewport: 'mobile', checks: {} };
@@ -156,12 +163,13 @@ for (const site of sites) {
 
   await page.screenshot({ path: path.join(OUT, 'growth-mobile-playing.png'), fullPage: false });
   report.functional.push(result);
-  await page.close();
+  await context.close();
 }
 
 // Light House: real mobile journey including keyboard and persistent playback.
 {
-  const page = await browser.newPage({ viewport: { width: 390, height: 844 } });
+  const context = await browser.newContext({ viewport: { width: 390, height: 844 } });
+  const page = await context.newPage();
   await page.goto(`${BASE}/light/?uxflow=${Date.now()}`, { waitUntil: 'domcontentloaded' });
   await page.waitForTimeout(700);
   const result = { site: 'light', viewport: 'mobile', checks: {} };
@@ -201,7 +209,7 @@ for (const site of sites) {
 
   await page.screenshot({ path: path.join(OUT, 'light-mobile-interaction.png'), fullPage: false });
   report.functional.push(result);
-  await page.close();
+  await context.close();
 }
 
 await browser.close();
