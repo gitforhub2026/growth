@@ -30,10 +30,13 @@ jobs:
       - name: Wait for production deployment
         run: sleep 75
       - name: Run desktop and mobile UX audit
+        shell: bash
         env:
           CHROME_BIN: ${{ steps.chrome.outputs.path }}
           UX_AUDIT_OUT: /tmp/ux-audit
-        run: node scripts/ux-audit.mjs | tee /tmp/ux-audit-summary.txt
+        run: |
+          set -euo pipefail
+          node scripts/ux-audit.mjs | tee /tmp/ux-audit-summary.txt
       - name: Print report summary
         if: always()
         run: |
