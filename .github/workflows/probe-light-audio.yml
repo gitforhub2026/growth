@@ -1,0 +1,29 @@
+name: Probe Light Audio
+
+on:
+  push:
+    branches: [main]
+    paths:
+      - '.github/workflows/probe-light-audio.yml'
+  workflow_dispatch:
+
+jobs:
+  probe:
+    runs-on: ubuntu-latest
+    timeout-minutes: 3
+    steps:
+      - name: Probe new R2 files
+        shell: bash
+        run: |
+          set -euo pipefail
+          python - <<'PY'
+          import urllib.parse, urllib.request
+          keys=['13原諒是為了放過自己.m4a','14劃清家庭情緒界線.m4a','15突發焦慮接地法.m4a']
+          base='https://growth.notesss.workers.dev/light-audio/'
+          for key in keys:
+              req=urllib.request.Request(base+urllib.parse.quote(key,safe=''),headers={'User-Agent':'Mozilla/5.0','Range':'bytes=0-31'},method='GET')
+              with urllib.request.urlopen(req,timeout=20) as r:
+                  assert r.status in (200,206),(key,r.status)
+                  assert r.read(32),key
+                  print('OK',key,r.status,r.headers.get('content-type'))
+          PY
