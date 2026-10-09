@@ -1,0 +1,72 @@
+name: Asset Health
+
+on:
+  push:
+    branches: [main]
+    paths:
+      - 'public/**'
+      - 'src/**'
+      - 'wrangler.jsonc'
+      - '.github/workflows/asset-health.yml'
+  workflow_dispatch:
+
+jobs:
+  assets:
+    runs-on: ubuntu-latest
+    timeout-minutes: 8
+    steps:
+      - name: Wait for production deployment
+        run: sleep 75
+      - name: Verify Growth and Light media assets
+        shell: bash
+        run: |
+          set -euo pipefail
+          python - <<'PY'
+          import urllib.parse, urllib.request
+
+          BASE = 'https://growth.notesss.workers.dev'
+          UA = 'Mozilla/5.0 (X11; Linux x86_64) AppleWebKit/537.36 Chrome/155 Safari/537.36'
+
+          def check(path, expected_prefix):
+              url = BASE + path
+              req = urllib.request.Request(url, headers={
+                  'User-Agent': UA,
+                  'Range': 'bytes=0-1023',
+                  'Accept': '*/*',
+              }, method='GET')
+              with urllib.request.urlopen(req, timeout=30) as r:
+                  if r.status not in (200, 206):
+                      raise AssertionError((path, r.status))
+                  ctype = (r.headers.get('content-type') or '').lower()
+                  if not ctype.startswith(expected_prefix):
+                      raise AssertionError((path, ctype, expected_prefix))
+                  if not r.read(1024):
+                      raise AssertionError((path, 'empty body'))
+                  print('OK', path, r.status, ctype)
+
+          # Growth Toolkit: all 12 audio episodes.
+          growth_audio = [
+              '08.m4a', '07 (1).m4a', '01.m4a', '03.m4a', '02.m4a', '09.m4a',
+              '04.m4a', '06.m4a', '12.m4a', '10.m4a', '05.m4a', '11.m4a',
+          ]
+          for key in growth_audio:
+              check('/audio/' + urllib.parse.quote(key, safe=''), 'audio/')
+
+          # Growth Toolkit: all 23 posters, guide cover and the 54-page guide PDF.
+          for n in range(1, 24):
+              check(f'/media/{n}.webp', 'image/webp')
+          check('/media/guide-01.webp', 'image/webp')
+          check('/media/teacher-guide.pdf', 'application/pdf')
+
+          # Light House: hero plus all 15 audio episodes.
+          check('/light/assets/hero.webp', 'image/webp')
+          light_audio = [
+              '01 (1).m4a','02 (1).m4a','03修復不等於和好.m4a','04 (1).m4a',
+              '05撕下社會名牌找回自己.m4a','06 (1).m4a','07靠微勝利走出低潮.m4a',
+              '08為什麼改變了還是不被信任.m4a','09別讓過去定義你.m4a','10怎樣道歉才有效.m4a',
+              '11靠微小行動走出低潮.m4a','12劃出人生停損點.m4a',
+              '13.m4a','14.m4a','15.m4a',
+          ]
+          for key in light_audio:
+              check('/light-audio/' + urllib.parse.quote(key, safe=''), 'audio/')
+          PY
