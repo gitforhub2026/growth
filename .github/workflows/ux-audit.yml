@@ -1,0 +1,60 @@
+name: UX Audit
+
+on:
+  push:
+    branches: [main]
+    paths:
+      - 'scripts/ux-audit.mjs'
+      - '.github/workflows/ux-audit.yml'
+  workflow_dispatch:
+
+jobs:
+  audit:
+    runs-on: ubuntu-latest
+    timeout-minutes: 12
+    steps:
+      - uses: actions/checkout@v4
+      - name: Find Chrome
+        id: chrome
+        shell: bash
+        run: |
+          set -euo pipefail
+          CHROME_BIN="$(command -v google-chrome || command -v google-chrome-stable || command -v chromium || command -v chromium-browser)"
+          test -n "$CHROME_BIN"
+          echo "path=$CHROME_BIN" >> "$GITHUB_OUTPUT"
+      - name: Install audit dependencies
+        run: npm install --no-save --ignore-scripts playwright-core@1.56.1 @axe-core/playwright@4.10.2
+      - name: Wait for production
+        run: sleep 75
+      - name: Run desktop and mobile UX audit
+        env:
+          CHROME_BIN: ${{ steps.chrome.outputs.path }}
+          UX_AUDIT_OUT: /tmp/ux-audit
+        run: node scripts/ux-audit.mjs | tee /tmp/ux-audit-summary.txt
+      - name: Print report summary
+        if: always()
+        run: |
+          echo '--- UX audit summary ---'
+          cat /tmp/ux-audit-summary.txt || true
+          echo '--- report ---'
+          python - <<'PY'
+          import json, pathlib
+          p=pathlib.Path('/tmp/ux-audit/report.json')
+          if not p.exists():
+              print('report missing')
+              raise SystemExit(0)
+          d=json.loads(p.read_text())
+          for r in d['runs']:
+              print(r['site'], r['viewport']['name'], 'overflow=', r['scrollWidth']-r['innerWidth'], 'tiny=', len(r['tinyTargets']), 'axe=', [(x['id'],x['count']) for x in r['seriousAxe']], 'console=', len(r['consoleErrors']), 'request=', len(r['requestFailures']))
+          for f in d['functional']:
+              print('FLOW', f['site'], f['checks'])
+          PY
+      - name: Upload UX audit artifact
+        if: always()
+        uses: actions/upload-artifact@v4
+        with:
+          name: ux-audit
+          path: |
+            /tmp/ux-audit
+            /tmp/ux-audit-summary.txt
+          retention-days: 7
