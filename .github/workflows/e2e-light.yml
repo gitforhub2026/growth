@@ -16,30 +16,26 @@ jobs:
     timeout-minutes: 8
     steps:
       - name: Wait for Cloudflare Git deployment
-        run: sleep 45
+        run: sleep 75
       - name: Verify homepage remains intact
         shell: bash
         run: |
           set -euo pipefail
-          curl -fsSL --retry 12 --retry-delay 10 --retry-all-errors https://growth.notesss.workers.dev/ -o /tmp/root.html
+          curl -fsSL --retry 12 --retry-delay 10 --retry-all-errors "https://growth.notesss.workers.dev/?e2e=${GITHUB_SHA}" -o /tmp/root.html
           grep -q '傳愛成長工具箱' /tmp/root.html
           ! grep -q '<title>傳愛光明棧｜Podcast</title>' /tmp/root.html
       - name: Verify light page structure and notes
         shell: bash
         run: |
           set -euo pipefail
-          curl -fsSL --retry 12 --retry-delay 10 --retry-all-errors https://growth.notesss.workers.dev/light/ -o /tmp/light.html
-          grep -q '<title>傳愛光明棧｜Podcast</title>' /tmp/light.html
-          grep -q '公益支持│' /tmp/light.html
-          grep -q '吳尊賢文教公益基金會' /tmp/light.html
-          grep -q '有些事情，為什麼一直放不下？' /tmp/light.html
-          grep -q '這一集，你會帶走' /tmp/light.html
-          grep -q '原諒，真的是唯一的出口嗎？' /tmp/light.html
-          grep -q '突然焦慮卡住時，如何把自己接回當下？' /tmp/light.html
-          ! grep -q '目前已上架' /tmp/light.html
-          ! grep -q '搜尋集數或主題' /tmp/light.html
-          ! grep -q '>節目介紹<' /tmp/light.html
-          curl -fsSL --retry 12 --retry-delay 10 --retry-all-errors https://growth.notesss.workers.dev/light/assets/hero.webp -o /tmp/hero.webp
+          curl -fsSL --retry 12 --retry-delay 10 --retry-all-errors "https://growth.notesss.workers.dev/light/?e2e=${GITHUB_SHA}" -o /tmp/light.html
+          for text in '<title>傳愛光明棧｜Podcast</title>' '公益支持│' '吳尊賢文教公益基金會' '有些事情，為什麼一直放不下？' '這一集，你會帶走' '原諒，真的是唯一的出口嗎？' '突然焦慮卡住時，如何把自己接回當下？'; do
+            grep -Fq "$text" /tmp/light.html || { echo "Missing: $text"; exit 1; }
+          done
+          ! grep -Fq '目前已上架' /tmp/light.html
+          ! grep -Fq '搜尋集數或主題' /tmp/light.html
+          ! grep -Fq '>節目介紹<' /tmp/light.html
+          curl -fsSL --retry 12 --retry-delay 10 --retry-all-errors "https://growth.notesss.workers.dev/light/assets/hero.webp?e2e=${GITHUB_SHA}" -o /tmp/hero.webp
           test -s /tmp/hero.webp
           file /tmp/hero.webp | grep -qi 'Web/P image\|WebP'
       - name: Verify all R2 audio objects are streamable
@@ -59,23 +55,21 @@ jobs:
               url=base+urllib.parse.quote(key, safe='')
               req=urllib.request.Request(url, headers={
                   'User-Agent':'Mozilla/5.0 (X11; Linux x86_64) AppleWebKit/537.36 Chrome/155 Safari/537.36',
-                  'Range':'bytes=0-1023',
-                  'Accept':'*/*'
+                  'Range':'bytes=0-1023','Accept':'*/*'
               }, method='GET')
               with urllib.request.urlopen(req, timeout=30) as r:
                   assert r.status in (200,206), (key, r.status)
                   ctype=r.headers.get('content-type','')
                   assert ctype.startswith('audio/'), (key, ctype)
-                  data=r.read(1024)
-                  assert data, key
-                  print('OK', key, r.status, ctype, len(data))
+                  assert r.read(1024), key
+                  print('OK', key, r.status, ctype)
           PY
       - name: Verify route isolation
         shell: bash
         run: |
           set -euo pipefail
-          root_hash=$(curl -fsSL https://growth.notesss.workers.dev/ | sha256sum | awk '{print $1}')
-          light_hash=$(curl -fsSL https://growth.notesss.workers.dev/light/ | sha256sum | awk '{print $1}')
+          root_hash=$(curl -fsSL "https://growth.notesss.workers.dev/?e2e=${GITHUB_SHA}" | sha256sum | awk '{print $1}')
+          light_hash=$(curl -fsSL "https://growth.notesss.workers.dev/light/?e2e=${GITHUB_SHA}" | sha256sum | awk '{print $1}')
           test "$root_hash" != "$light_hash"
           echo "root=$root_hash"
           echo "light=$light_hash"
