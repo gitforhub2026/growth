@@ -1,0 +1,60 @@
+name: Normalize support copy
+
+on:
+  push:
+    branches: [main]
+
+permissions:
+  contents: write
+
+jobs:
+  update:
+    if: github.event.head_commit.message == 'Normalize support copy'
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@v4
+        with:
+          fetch-depth: 0
+      - name: Normalize both headers
+        run: |
+          python - <<'PY'
+          from pathlib import Path
+
+          rule = '.support-uniform{font-size:13px!important;font-weight:750!important;color:#667268!important;letter-spacing:.03em!important;white-space:nowrap!important}'
+          marker = '.series-switcher .switch-arrow{font-size:12px;opacity:.72}'
+
+          root = Path('public/index.html')
+          s = root.read_text(encoding='utf-8')
+          old = '<div class="support-credit"><span>公益支持</span><strong>吳尊賢文教公益基金會</strong></div>'
+          new = '<div class="support-credit support-uniform">感謝公益支持│吳尊賢文教公益基金會</div>'
+          if old not in s:
+              raise SystemExit('Root support copy not found')
+          s = s.replace(old, new, 1)
+          if rule not in s:
+              if marker not in s: raise SystemExit('Root style marker missing')
+              s = s.replace(marker, marker + '\n' + rule, 1)
+          root.write_text(s, encoding='utf-8')
+
+          light = Path('public/light/index.html')
+          s = light.read_text(encoding='utf-8')
+          old = '<div class="support"><span class="support-desktop">感謝<b>公益支持│吳尊賢文教公益基金會</b></span><span class="support-mobile">公益支持｜吳尊賢基金會</span></div>'
+          new = '<div class="support support-uniform">感謝公益支持│吳尊賢文教公益基金會</div>'
+          if old not in s:
+              raise SystemExit('Light support copy not found')
+          s = s.replace(old, new, 1)
+          if rule not in s:
+              if marker not in s: raise SystemExit('Light style marker missing')
+              s = s.replace(marker, marker + '\n' + rule, 1)
+          light.write_text(s, encoding='utf-8')
+          PY
+          grep -Fq '<div class="support-credit support-uniform">感謝公益支持│吳尊賢文教公益基金會</div>' public/index.html
+          grep -Fq '<div class="support support-uniform">感謝公益支持│吳尊賢文教公益基金會</div>' public/light/index.html
+          grep -Fq '.support-uniform{font-size:13px!important;font-weight:750!important;color:#667268!important;' public/index.html
+          grep -Fq '.support-uniform{font-size:13px!important;font-weight:750!important;color:#667268!important;' public/light/index.html
+      - name: Commit site changes
+        run: |
+          git config user.name "github-actions[bot]"
+          git config user.email "41898282+github-actions[bot]@users.noreply.github.com"
+          git add public/index.html public/light/index.html
+          git commit -m "Normalize support credit across both headers"
+          git push
