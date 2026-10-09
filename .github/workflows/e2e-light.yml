@@ -24,17 +24,21 @@ jobs:
           curl -fsSL --retry 12 --retry-delay 10 --retry-all-errors "https://growth.notesss.workers.dev/?e2e=${GITHUB_SHA}" -o /tmp/root.html
           grep -q '傳愛成長工具箱' /tmp/root.html
           ! grep -q '<title>傳愛光明棧｜Podcast</title>' /tmp/root.html
-      - name: Verify light page structure and notes
+      - name: Verify light page structure and user copy
         shell: bash
         run: |
           set -euo pipefail
           curl -fsSL --retry 12 --retry-delay 10 --retry-all-errors "https://growth.notesss.workers.dev/light/?e2e=${GITHUB_SHA}" -o /tmp/light.html
-          for text in '<title>傳愛光明棧｜Podcast</title>' '公益支持│' '吳尊賢文教公益基金會' '有些事情，為什麼一直放不下？' '這一集，你會帶走' '原諒，真的是唯一的出口嗎？' '面對原生家庭，如何不斷聯也不委屈？' '突然焦慮卡住時，如何把自己接回當下？' "file:'13.m4a'" "file:'14.m4a'" "file:'15.m4a'"; do
+          for text in '<title>傳愛光明棧｜Podcast</title>' '公益支持│' '吳尊賢文教公益基金會' '吳尊賢基金會' '選一集，慢慢聽' 'PODCAST' '有些事情，為什麼一直放不下？' '原諒，真的是唯一的出口嗎？' '面對原生家庭，如何不斷聯也不委屈？' '突然焦慮卡住時，如何把自己接回當下？' "file:'13.m4a'" "file:'14.m4a'" "file:'15.m4a'"; do
             grep -Fq "$text" /tmp/light.html || { echo "Missing: $text"; exit 1; }
           done
-          ! grep -Fq '目前已上架' /tmp/light.html
-          ! grep -Fq '搜尋集數或主題' /tmp/light.html
-          ! grep -Fq '>節目介紹<' /tmp/light.html
+          for old in '聲音內容' '聲音主題' '音檔已連接，可直接播放' '這個主題的文字內容已整理，音檔尚未放入 R2。' '目前已上架' '搜尋集數或主題' '>節目介紹<'; do
+            ! grep -Fq "$old" /tmp/light.html || { echo "Old/internal copy remains: $old"; exit 1; }
+          done
+          grep -Fq '.support-mobile{display:inline}' /tmp/light.html
+          grep -Fq '.hero-art{display:none}' /tmp/light.html
+          grep -Fq 'white-space:nowrap' /tmp/light.html
+          grep -Fq '<span class="footer-main">傳愛光明棧 · 2026</span><span class="footer-sub">' /tmp/light.html
           curl -fsSL --retry 12 --retry-delay 10 --retry-all-errors "https://growth.notesss.workers.dev/light/assets/hero.webp?e2e=${GITHUB_SHA}" -o /tmp/hero.webp
           test -s /tmp/hero.webp
           file /tmp/hero.webp | grep -qi 'Web/P image\|WebP'
