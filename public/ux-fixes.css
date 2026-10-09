@@ -1,0 +1,94 @@
+/* Mobile audio control that stays with the reader while episode copy is on screen. */
+.mobile-now-player{display:none}
+@media(max-width:760px){
+  body.mobile-now-player-visible{padding-bottom:calc(94px + env(safe-area-inset-bottom,0px))}
+  .mobile-now-player{
+    position:fixed;
+    left:10px;
+    right:10px;
+    bottom:calc(10px + env(safe-area-inset-bottom,0px));
+    z-index:1200;
+    display:grid;
+    grid-template-columns:46px minmax(0,1fr) auto;
+    grid-template-rows:auto auto;
+    column-gap:11px;
+    row-gap:6px;
+    align-items:center;
+    padding:10px 12px 9px;
+    border:1px solid rgba(59,112,132,.22);
+    border-radius:18px;
+    background:rgba(255,253,248,.97);
+    box-shadow:0 14px 38px rgba(25,70,88,.18);
+    backdrop-filter:blur(18px) saturate(1.15);
+    -webkit-backdrop-filter:blur(18px) saturate(1.15);
+    transform:translateY(calc(120% + env(safe-area-inset-bottom,0px)));
+    opacity:0;
+    visibility:hidden;
+    pointer-events:none;
+    transition:transform .22s ease,opacity .18s ease,visibility 0s linear .22s;
+  }
+  .mobile-now-player.is-visible{
+    transform:translateY(0);
+    opacity:1;
+    visibility:visible;
+    pointer-events:auto;
+    transition:transform .22s ease,opacity .18s ease;
+  }
+  .mobile-now-toggle{
+    grid-row:1 / span 2;
+    width:46px;
+    height:46px;
+    border:0;
+    border-radius:50%;
+    display:grid;
+    place-items:center;
+    background:#215f78;
+    color:#fff;
+    font-size:17px;
+    font-weight:900;
+    box-shadow:0 7px 16px rgba(33,95,120,.18);
+    cursor:pointer;
+  }
+  .mobile-now-copy{min-width:0;align-self:end}
+  .mobile-now-kicker{
+    display:block;
+    margin-bottom:1px;
+    color:#6f8994;
+    font-size:9px;
+    line-height:1.1;
+    font-weight:900;
+    letter-spacing:.13em;
+  }
+  .mobile-now-title{
+    display:block;
+    overflow:hidden;
+    text-overflow:ellipsis;
+    white-space:nowrap;
+    color:#19465b;
+    font-size:13px;
+    line-height:1.35;
+    font-weight:900;
+  }
+  .mobile-now-time{
+    align-self:end;
+    color:#71858d;
+    font-size:10px;
+    line-height:1;
+    font-variant-numeric:tabular-nums;
+    white-space:nowrap;
+  }
+  .mobile-now-seek{
+    grid-column:2 / 4;
+    width:100%;
+    height:18px;
+    margin:0;
+    accent-color:#2f8fb4;
+    cursor:pointer;
+  }
+}
+@media(max-width:380px){
+  .mobile-now-player{left:7px;right:7px;padding-left:9px;padding-right:9px;column-gap:9px}
+  .mobile-now-toggle{width:43px;height:43px}
+  .mobile-now-title{font-size:12.5px}
+  .mobile-now-time{font-size:9.5px}
+}
