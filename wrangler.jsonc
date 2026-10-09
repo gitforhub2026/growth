@@ -12,6 +12,10 @@
     {
       "binding": "AUDIO",
       "bucket_name": "growth-audio"
+    },
+    {
+      "binding": "LIGHT_AUDIO",
+      "bucket_name": "light"
     }
   ]
 }
