@@ -4,9 +4,19 @@
   outline-offset:3px!important;
 }
 
-.ep-row[role="button"]:focus-visible{
+/* Contrast fixes found by the cross-device UX audit. */
+.brand-text small{color:#626b64!important}
+.series-switcher .series-label{color:#5f685f!important}
+.section-head p{color:#59645d!important}
+.ep-kicker{color:#5f6b62!important}
+.topic-label{color:#5f6b62!important}
+.time{color:#59645d!important}
+.mobile-picker small{color:#5f6b62!important}
+
+.ep-meta[role="button"]:focus-visible{
   outline:3px solid rgba(49,88,68,.45);
-  outline-offset:2px;
+  outline-offset:3px;
+  border-radius:10px;
 }
 .playmini{
   width:40px!important;
@@ -107,7 +117,7 @@
   .light-now-player.has-status .light-now-status{display:block}
   .light-now-time{
     align-self:end;
-    color:#7b887f;
+    color:#6a776e;
     font-size:10px;
     line-height:1;
     white-space:nowrap;
