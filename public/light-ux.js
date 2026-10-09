@@ -58,29 +58,50 @@
     }
   }
 
+  function startAudio() {
+    playbackStatus = '正在載入…';
+    const promise = audio.play();
+    syncMini();
+    promise?.catch(() => {
+      playbackStatus = '播放失敗，請再試一次';
+      syncMini();
+    });
+  }
+
   function syncEpisodeRows() {
     const currentRow = currentIndex();
     const playing = !audio.paused && !audio.ended;
     episodeList.querySelectorAll('.ep-row').forEach((row, index) => {
-      row.setAttribute('role', 'button');
-      row.setAttribute('tabindex', '0');
+      // Keep "select this episode" and "play/pause" as sibling controls.
+      // A role=button on the whole row would contain another button and create
+      // nested interactive controls for keyboard/screen-reader users.
+      row.removeAttribute('role');
+      row.removeAttribute('tabindex');
       row.setAttribute('aria-current', index === currentRow ? 'true' : 'false');
+
+      const meta = row.querySelector('.ep-meta');
       const rowTitle = row.querySelector('.ep-title')?.textContent.trim() || `第 ${index + 1} 集`;
-      row.setAttribute('aria-label', `選擇：${rowTitle}`);
-      if (!row.dataset.uxKeyboard) {
-        row.dataset.uxKeyboard = '1';
-        row.addEventListener('keydown', (event) => {
-          if (event.target !== row || (event.key !== 'Enter' && event.key !== ' ')) return;
-          event.preventDefault();
-          if (typeof selectTopic === 'function') selectTopic(index, true);
-        });
+      if (meta) {
+        meta.setAttribute('role', 'button');
+        meta.setAttribute('tabindex', '0');
+        meta.setAttribute('aria-label', `選擇：${rowTitle}`);
+        if (!meta.dataset.uxKeyboard) {
+          meta.dataset.uxKeyboard = '1';
+          meta.addEventListener('keydown', (event) => {
+            if (event.key !== 'Enter' && event.key !== ' ') return;
+            event.preventDefault();
+            if (typeof selectTopic === 'function') selectTopic(index, true);
+          });
+        }
       }
 
       const button = row.querySelector('.playmini');
       if (!button) return;
       const isCurrent = index === currentRow;
       button.textContent = isCurrent && playing ? '❚❚' : '▶';
-      button.setAttribute('aria-label', `${isCurrent && playing ? '暫停' : '播放'}：${rowTitle}`);
+      const action = isCurrent && playing ? '暫停' : (isCurrent && audio.currentTime > 0 && !audio.ended ? '繼續播放' : '播放');
+      button.setAttribute('aria-label', `${action}：${rowTitle}`);
+      button.title = `${action}：${rowTitle}`;
     });
 
     playButton?.setAttribute('aria-label', playing ? '暫停本集' : '播放本集');
@@ -127,16 +148,41 @@
     syncVisibility();
   }).observe(episodeList, { childList: true });
 
+  // Override the tiny list play button in capture phase. The original page helper
+  // re-selects the current episode before playing, which resets a paused episode
+  // to 0:00. Here a second tap truly pauses/resumes in place.
+  document.addEventListener('click', (event) => {
+    const button = event.target.closest?.('#episodeList .playmini');
+    if (!button) return;
+    event.preventDefault();
+    event.stopPropagation();
+    event.stopImmediatePropagation();
+
+    userActivatedAudio = true;
+    const rows = Array.from(episodeList.querySelectorAll('.ep-row'));
+    const index = rows.indexOf(button.closest('.ep-row'));
+    if (index < 0) return;
+
+    const sameEpisode = index === currentIndex();
+    if (!sameEpisode && typeof selectTopic === 'function') {
+      selectTopic(index, false);
+      startAudio();
+    } else if (!audio.paused && !audio.ended) {
+      playbackStatus = '';
+      audio.pause();
+      syncMini();
+    } else {
+      if (audio.ended) audio.currentTime = 0;
+      startAudio();
+    }
+    syncVisibility();
+  }, true);
+
   miniToggle.addEventListener('click', () => {
     userActivatedAudio = true;
     if (audio.paused || audio.ended) {
-      playbackStatus = '正在載入…';
-      const promise = audio.play();
-      syncMini();
-      promise?.catch(() => {
-        playbackStatus = '播放失敗，請再試一次';
-        syncMini();
-      });
+      if (audio.ended) audio.currentTime = 0;
+      startAudio();
     } else {
       playbackStatus = '';
       audio.pause();
@@ -205,10 +251,10 @@
   audio.addEventListener('loadedmetadata', syncMini);
   mobileQuery.addEventListener?.('change', syncVisibility);
 
-  // A direct click on the inline/list controls is user intent even before the
-  // audio element fires play, so remember it for later sticky-control behavior.
+  // A direct click on the main controls is user intent even before the audio
+  // element fires play, so remember it for later sticky-control behavior.
   document.addEventListener('click', (event) => {
-    if (event.target.closest?.('#playBtn,#coverBtn,.playmini')) userActivatedAudio = true;
+    if (event.target.closest?.('#playBtn,#coverBtn')) userActivatedAudio = true;
   }, true);
 
   syncEpisodeRows();
