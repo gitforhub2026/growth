@@ -4,6 +4,9 @@ on:
   push:
     branches: [main]
     paths:
+      - 'public/**'
+      - 'src/**'
+      - 'wrangler.jsonc'
       - 'scripts/ux-audit.mjs'
       - '.github/workflows/ux-audit.yml'
   workflow_dispatch:
@@ -24,6 +27,8 @@ jobs:
           echo "path=$CHROME_BIN" >> "$GITHUB_OUTPUT"
       - name: Install audit dependencies
         run: npm install --no-save --ignore-scripts playwright-core@1.56.1 @axe-core/playwright@4.10.2
+      - name: Wait for production deployment
+        run: sleep 75
       - name: Run desktop and mobile UX audit
         env:
           CHROME_BIN: ${{ steps.chrome.outputs.path }}
