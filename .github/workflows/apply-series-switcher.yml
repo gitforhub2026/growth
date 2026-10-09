@@ -1,0 +1,86 @@
+name: Apply series switcher
+
+on:
+  push:
+    branches: [main]
+
+permissions:
+  contents: write
+
+jobs:
+  apply:
+    if: github.event.head_commit.message == 'Apply series switcher'
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@v4
+        with:
+          fetch-depth: 0
+
+      - name: Add cross-site switcher
+        run: |
+          python - <<'PY'
+          from pathlib import Path
+
+          style = '''
+          <style id="series-switcher-style">
+          .series-switcher{display:flex;align-items:center;gap:3px;padding:4px;border:1px solid rgba(67,87,72,.16);background:rgba(255,255,255,.78);border-radius:999px;box-shadow:0 5px 18px rgba(45,65,52,.055);white-space:nowrap;flex:0 0 auto}
+          .series-switcher .series-label{margin:0 5px 0 7px;font-size:10px;font-weight:900;letter-spacing:.14em;color:#7a847c}
+          .series-switcher a{display:inline-flex;align-items:center;gap:4px;padding:8px 11px;border-radius:999px;color:#56635a;text-decoration:none;font-size:12.5px;font-weight:850;line-height:1;transition:background .18s,color .18s,transform .18s,box-shadow .18s}
+          .series-switcher a:hover{background:#edf3ec;color:#274c38;transform:translateY(-1px)}
+          .series-switcher a.is-active{background:#315844;color:#fff;box-shadow:0 4px 12px rgba(49,88,68,.18)}
+          .series-switcher .switch-arrow{font-size:12px;opacity:.72}
+          @media(max-width:760px){
+            .support-credit,.site-header .support{display:none!important}
+            .series-switcher{margin-left:auto;padding:3px;background:rgba(255,255,255,.9)}
+            .series-switcher .series-label,.series-switcher a.is-active{display:none}
+            .series-switcher a{padding:8px 10px;font-size:11.5px}
+            .series-switcher a.switch-other:before{content:'另一站 · ';font-weight:700;opacity:.68}
+            .series-switcher .podcast-word{display:none}
+          }
+          @media(max-width:390px){.series-switcher a{padding:7px 8px;font-size:11px}}
+          </style>
+          '''
+
+          root_nav = '''<nav class="series-switcher" aria-label="傳愛系列切換"><span class="series-label">傳愛系列</span><a class="is-active" href="/" aria-current="page">成長工具箱</a><a class="switch-other" href="/light/" aria-label="前往傳愛光明棧 Podcast">光明棧 <span class="podcast-word">Podcast</span><span class="switch-arrow">→</span></a></nav>'''
+          light_nav = '''<nav class="series-switcher" aria-label="傳愛系列切換"><span class="series-label">傳愛系列</span><a class="switch-other" href="/" aria-label="前往傳愛成長工具箱">成長工具箱<span class="switch-arrow">→</span></a><a class="is-active" href="/light/" aria-current="page">光明棧 <span class="podcast-word">Podcast</span></a></nav>'''
+
+          def patch(path, anchor, nav):
+              p = Path(path)
+              s = p.read_text(encoding='utf-8')
+              if 'series-switcher-style' in s:
+                  raise SystemExit(f'{path}: already patched')
+              if anchor not in s:
+                  raise SystemExit(f'{path}: header anchor missing')
+              s = s.replace('</head>', style + '\n</head>', 1)
+              s = s.replace(anchor, nav + anchor, 1)
+              p.write_text(s, encoding='utf-8')
+
+          patch('public/index.html', '<div class="support-credit">', root_nav)
+          patch('public/light/index.html', '<div class="support">', light_nav)
+
+          e2e = Path('.github/workflows/e2e-light.yml')
+          s = e2e.read_text(encoding='utf-8')
+          root_check = "          grep -Fq 'aria-label=\"傳愛系列切換\"' /tmp/root.html\n          grep -Fq 'href=\"/light/\"' /tmp/root.html\n"
+          light_check = "          grep -Fq 'aria-label=\"傳愛系列切換\"' /tmp/light.html\n          grep -Fq 'href=\"/\"' /tmp/light.html\n"
+          root_anchor = "          ! grep -q '<title>傳愛光明棧｜Podcast</title>' /tmp/root.html\n"
+          light_anchor = "          grep -Fq '<span class=\"footer-main\">傳愛光明棧 · 2026</span><span class=\"footer-sub\">' /tmp/light.html\n"
+          if root_check.strip() not in s:
+              s = s.replace(root_anchor, root_anchor + root_check, 1)
+          if light_check.strip() not in s:
+              s = s.replace(light_anchor, light_anchor + light_check, 1)
+          e2e.write_text(s, encoding='utf-8')
+          PY
+
+          grep -Fq 'aria-label="傳愛系列切換"' public/index.html
+          grep -Fq 'href="/light/"' public/index.html
+          grep -Fq 'aria-label="傳愛系列切換"' public/light/index.html
+          grep -Fq 'href="/"' public/light/index.html
+
+      - name: Commit changes
+        run: |
+          git config user.name "github-actions[bot]"
+          git config user.email "41898282+github-actions[bot]@users.noreply.github.com"
+          git add public/index.html public/light/index.html .github/workflows/e2e-light.yml
+          git rm .github/workflows/apply-series-switcher.yml
+          git commit -m "Add cross-navigation between Growth Toolkit and Light House"
+          git push
