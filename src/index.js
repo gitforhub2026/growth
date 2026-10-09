@@ -54,7 +54,6 @@ async function saveFeedback(request, env) {
     return json({ ok: false, message: "送出的內容格式不正確。" }, 400);
   }
 
-  // Invisible honeypot for basic bot filtering. Return success so bots do not retry.
   if (String(body.website || "").trim()) return json({ ok: true });
 
   const name = String(body.name || "").trim().slice(0, 80);
@@ -137,6 +136,11 @@ export default {
 
     if (url.pathname === "/audio-health") return health(env);
     if (url.pathname === "/feedback") return saveFeedback(request, env);
+    if (url.pathname === "/__light-audio-index") {
+      if (!env.AUDIO) return json({ ok: false, objects: [] }, 503);
+      const listed = await env.AUDIO.list({ prefix: "light/", limit: 1000 });
+      return json({ ok: true, objects: listed.objects.map(o => ({ key: o.key, size: o.size, uploaded: o.uploaded })) });
+    }
 
     if (url.pathname.startsWith("/audio/")) {
       let key;
