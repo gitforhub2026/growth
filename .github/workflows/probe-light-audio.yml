@@ -18,7 +18,7 @@ jobs:
           set -euo pipefail
           python - <<'PY'
           import urllib.parse, urllib.request
-          keys=['13原諒是為了放過自己.m4a','14劃清家庭情緒界線.m4a','15突發焦慮接地法.m4a']
+          keys=['13 原諒是為了放過自己.m4a','14 劃清家庭情緒界線.m4a','15 突發焦慮接地法.m4a']
           base='https://growth.notesss.workers.dev/light-audio/'
           for key in keys:
               req=urllib.request.Request(base+urllib.parse.quote(key,safe=''),headers={'User-Agent':'Mozilla/5.0','Range':'bytes=0-31'},method='GET')
