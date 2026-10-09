@@ -144,7 +144,7 @@ jobs:
           grep -Fq '.light-feedback{' /tmp/light-feedback.css
           grep -Fq "source: 'light-house'" /tmp/light-feedback.js
           grep -Fq '.light-now-player{' /tmp/light-ux.css
-          grep -Fq "row.setAttribute('role', 'button')" /tmp/light-ux.js
+          grep -Fq "meta.setAttribute('role', 'button')" /tmp/light-ux.js
           grep -Fq '播放失敗，請再試一次' /tmp/light-ux.js
           curl -fsSL --retry 12 --retry-delay 10 --retry-all-errors "https://growth.notesss.workers.dev/light/assets/hero.webp?e2e=${GITHUB_SHA}" -o /tmp/hero.webp
           test -s /tmp/hero.webp
@@ -169,9 +169,9 @@ jobs:
             const picker = page.locator('#mobilePicker');
             await picker.click();
             const rows = page.locator('#episodeList .ep-row');
-            const second = rows.nth(1);
-            await second.focus();
-            if ((await second.getAttribute('role')) !== 'button' || (await second.getAttribute('tabindex')) !== '0') throw new Error('Episode row is not keyboard accessible');
+            const secondMeta = rows.nth(1).locator('.ep-meta');
+            await secondMeta.focus();
+            if ((await secondMeta.getAttribute('role')) !== 'button' || (await secondMeta.getAttribute('tabindex')) !== '0') throw new Error('Episode title control is not keyboard accessible');
             const beforeTitle = await page.locator('#dTitle').innerText();
             await page.keyboard.press('Enter');
             await page.waitForTimeout(300);
