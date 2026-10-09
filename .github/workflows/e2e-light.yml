@@ -24,7 +24,7 @@ jobs:
           curl -fsSL --retry 12 --retry-delay 10 --retry-all-errors https://growth.notesss.workers.dev/ -o /tmp/root.html
           grep -q '傳愛成長工具箱' /tmp/root.html
           ! grep -q '<title>傳愛光明棧｜Podcast</title>' /tmp/root.html
-      - name: Verify light page structure
+      - name: Verify light page structure and notes
         shell: bash
         run: |
           set -euo pipefail
@@ -32,14 +32,17 @@ jobs:
           grep -q '<title>傳愛光明棧｜Podcast</title>' /tmp/light.html
           grep -q '公益支持│' /tmp/light.html
           grep -q '吳尊賢文教公益基金會' /tmp/light.html
-          grep -q '目前已上架 12 個主題' /tmp/light.html
-          grep -q '為人生畫出停損點' /tmp/light.html
+          grep -q '有些事情，為什麼一直放不下？' /tmp/light.html
+          grep -q '這一集，你會帶走' /tmp/light.html
+          grep -q '原諒，真的是唯一的出口嗎？' /tmp/light.html
+          grep -q '突然焦慮卡住時，如何把自己接回當下？' /tmp/light.html
+          ! grep -q '目前已上架' /tmp/light.html
           ! grep -q '搜尋集數或主題' /tmp/light.html
           ! grep -q '>節目介紹<' /tmp/light.html
           curl -fsSL --retry 12 --retry-delay 10 --retry-all-errors https://growth.notesss.workers.dev/light/assets/hero.webp -o /tmp/hero.webp
           test -s /tmp/hero.webp
           file /tmp/hero.webp | grep -qi 'Web/P image\|WebP'
-      - name: Verify all 12 R2 audio objects are streamable
+      - name: Verify all R2 audio objects are streamable
         shell: bash
         run: |
           set -euo pipefail
