@@ -48,7 +48,7 @@ jobs:
               p = Path(path)
               s = p.read_text(encoding='utf-8')
               if 'series-switcher-style' in s:
-                  raise SystemExit(f'{path}: already patched')
+                  return
               if anchor not in s:
                   raise SystemExit(f'{path}: header anchor missing')
               s = s.replace('</head>', style + '\n</head>', 1)
@@ -57,18 +57,6 @@ jobs:
 
           patch('public/index.html', '<div class="support-credit">', root_nav)
           patch('public/light/index.html', '<div class="support">', light_nav)
-
-          e2e = Path('.github/workflows/e2e-light.yml')
-          s = e2e.read_text(encoding='utf-8')
-          root_check = "          grep -Fq 'aria-label=\"傳愛系列切換\"' /tmp/root.html\n          grep -Fq 'href=\"/light/\"' /tmp/root.html\n"
-          light_check = "          grep -Fq 'aria-label=\"傳愛系列切換\"' /tmp/light.html\n          grep -Fq 'href=\"/\"' /tmp/light.html\n"
-          root_anchor = "          ! grep -q '<title>傳愛光明棧｜Podcast</title>' /tmp/root.html\n"
-          light_anchor = "          grep -Fq '<span class=\"footer-main\">傳愛光明棧 · 2026</span><span class=\"footer-sub\">' /tmp/light.html\n"
-          if root_check.strip() not in s:
-              s = s.replace(root_anchor, root_anchor + root_check, 1)
-          if light_check.strip() not in s:
-              s = s.replace(light_anchor, light_anchor + light_check, 1)
-          e2e.write_text(s, encoding='utf-8')
           PY
 
           grep -Fq 'aria-label="傳愛系列切換"' public/index.html
@@ -76,11 +64,10 @@ jobs:
           grep -Fq 'aria-label="傳愛系列切換"' public/light/index.html
           grep -Fq 'href="/"' public/light/index.html
 
-      - name: Commit changes
+      - name: Commit site changes
         run: |
           git config user.name "github-actions[bot]"
           git config user.email "41898282+github-actions[bot]@users.noreply.github.com"
-          git add public/index.html public/light/index.html .github/workflows/e2e-light.yml
-          git rm .github/workflows/apply-series-switcher.yml
+          git add public/index.html public/light/index.html
           git commit -m "Add cross-navigation between Growth Toolkit and Light House"
           git push
