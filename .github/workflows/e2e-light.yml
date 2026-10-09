@@ -5,7 +5,9 @@ on:
     branches: [main]
     paths:
       - 'public/index.html'
+      - 'public/ux-fixes.js'
       - 'public/light/**'
+      - 'public/light-feedback.*'
       - 'src/**'
       - 'wrangler.jsonc'
       - '.github/workflows/e2e-light.yml'
@@ -28,6 +30,10 @@ jobs:
           grep -Fq '<div class="support-credit support-uniform">感謝公益支持│吳尊賢文教公益基金會</div>' /tmp/root.html
           grep -Fq '.support-uniform{font-size:13px!important;font-weight:750!important;color:#667268!important;' /tmp/root.html
           ! grep -Fq '<div class="support-credit"><span>公益支持</span><strong>吳尊賢文教公益基金會</strong></div>' /tmp/root.html
+          grep -Fq '<script src="/ux-fixes.js"></script>' /tmp/root.html
+          curl -fsSL --retry 12 --retry-delay 10 --retry-all-errors "https://growth.notesss.workers.dev/ux-fixes.js?e2e=${GITHUB_SHA}" -o /tmp/ux-fixes.js
+          grep -Fq 'selectEpisode(button.dataset.play, true, false)' /tmp/ux-fixes.js
+          grep -Fq 'window.scrollTo({ top: readingPosition' /tmp/ux-fixes.js
       - name: Verify light page structure and user copy
         shell: bash
         run: |
@@ -45,6 +51,14 @@ jobs:
           grep -Fq '.hero-art{display:none}' /tmp/light.html
           grep -Fq 'white-space:nowrap' /tmp/light.html
           grep -Fq '<span class="footer-main">傳愛光明棧 · 2026</span><span class="footer-sub">' /tmp/light.html
+          grep -Fq 'id="light-feedback-form"' /tmp/light.html
+          grep -Fq '歡迎留下建議' /tmp/light.html
+          grep -Fq 'href="/light-feedback.css"' /tmp/light.html
+          grep -Fq '<script src="/light-feedback.js"></script>' /tmp/light.html
+          curl -fsSL --retry 12 --retry-delay 10 --retry-all-errors "https://growth.notesss.workers.dev/light-feedback.css?e2e=${GITHUB_SHA}" -o /tmp/light-feedback.css
+          curl -fsSL --retry 12 --retry-delay 10 --retry-all-errors "https://growth.notesss.workers.dev/light-feedback.js?e2e=${GITHUB_SHA}" -o /tmp/light-feedback.js
+          grep -Fq '.light-feedback{' /tmp/light-feedback.css
+          grep -Fq "source: 'light-house'" /tmp/light-feedback.js
           curl -fsSL --retry 12 --retry-delay 10 --retry-all-errors "https://growth.notesss.workers.dev/light/assets/hero.webp?e2e=${GITHUB_SHA}" -o /tmp/hero.webp
           test -s /tmp/hero.webp
           file /tmp/hero.webp | grep -qi 'Web/P image\|WebP'
