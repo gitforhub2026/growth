@@ -40,8 +40,61 @@ jobs:
           grep -Fq "className = 'mobile-now-player'" /tmp/ux-fixes.js
           grep -Fq "miniToggle.addEventListener('click'" /tmp/ux-fixes.js
           grep -Fq "miniSeek.addEventListener('input'" /tmp/ux-fixes.js
+          grep -Fq "button.innerHTML = '<span>❚❚</span> 暫停'" /tmp/ux-fixes.js
           grep -Fq '.mobile-now-player{' /tmp/ux-fixes.css
           grep -Fq '.mobile-now-player.is-visible{' /tmp/ux-fixes.css
+      - name: Verify mobile playback UX in browser
+        shell: bash
+        run: |
+          set -euo pipefail
+          CHROME_BIN="$(command -v google-chrome || command -v google-chrome-stable || command -v chromium || command -v chromium-browser)"
+          test -n "$CHROME_BIN"
+          npm install --no-save --ignore-scripts playwright-core@1.56.1 >/dev/null 2>&1
+          CHROME_BIN="$CHROME_BIN" node <<'NODE'
+          const { chromium } = require('playwright-core');
+          (async () => {
+            const browser = await chromium.launch({
+              executablePath: process.env.CHROME_BIN,
+              headless: true,
+              args: ['--no-sandbox', '--autoplay-policy=no-user-gesture-required']
+            });
+            const page = await browser.newPage({ viewport: { width: 390, height: 844 } });
+            await page.goto(`https://growth.notesss.workers.dev/?ux=${Date.now()}`, { waitUntil: 'domcontentloaded' });
+            const card = page.locator('#episode-grid .play-btn[data-play]').first();
+            await card.waitFor({ state: 'visible' });
+            await card.scrollIntoViewIfNeeded();
+            await page.waitForTimeout(400);
+
+            const before = await page.evaluate(() => window.scrollY);
+            await card.click();
+            await page.waitForTimeout(900);
+            const after = await page.evaluate(() => window.scrollY);
+            if (Math.abs(after - before) > 12) throw new Error(`Playback moved viewport: ${before} -> ${after}`);
+
+            const miniVisible = await page.locator('.mobile-now-player').evaluate((el) =>
+              el.classList.contains('is-visible') && getComputedStyle(el).visibility === 'visible'
+            );
+            if (!miniVisible) throw new Error('Mobile player bar did not become visible');
+
+            const playingText = await card.innerText();
+            if (!playingText.includes('暫停')) throw new Error(`Card did not switch to pause: ${playingText}`);
+
+            await card.click();
+            await page.waitForTimeout(250);
+            const paused = await page.locator('#audio-player').evaluate((el) => el.paused);
+            if (!paused) throw new Error('Second tap on episode card did not pause audio');
+            const pausedText = await card.innerText();
+            if (!pausedText.includes('繼續播放')) throw new Error(`Card did not show resume state: ${pausedText}`);
+
+            await page.locator('.mobile-now-toggle').click();
+            await page.waitForFunction(() => !document.querySelector('#audio-player')?.paused, null, { timeout: 5000 });
+            const resumedText = await page.locator('.mobile-now-toggle').innerText();
+            if (!resumedText.includes('❚❚')) throw new Error(`Mini player did not resume: ${resumedText}`);
+
+            await browser.close();
+            console.log('Mobile playback UX OK');
+          })().catch((error) => { console.error(error); process.exit(1); });
+          NODE
       - name: Verify light page structure and user copy
         shell: bash
         run: |
