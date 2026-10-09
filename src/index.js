@@ -89,15 +89,15 @@ async function saveFeedback(request, env) {
   }
 }
 
-async function serveObject(request, env, key, allowed) {
-  if (!env.AUDIO) return new Response("Storage unavailable", { status: 503 });
+async function serveObject(request, bucket, key, allowed) {
+  if (!bucket) return new Response("Storage unavailable", { status: 503 });
   if (!key || key.includes("..") || !allowed(key.toLowerCase())) {
     return new Response("Not Found", { status: 404 });
   }
 
   try {
     if (request.method === "HEAD") {
-      const object = await env.AUDIO.head(key);
+      const object = await bucket.head(key);
       if (!object) return new Response("Not Found", { status: 404 });
       const headers = objectHeaders(object, key);
       headers.set("content-length", String(object.size));
@@ -109,7 +109,7 @@ async function serveObject(request, env, key, allowed) {
     }
 
     const rangeRequested = request.headers.has("range");
-    const object = await env.AUDIO.get(key, rangeRequested ? { range: request.headers } : undefined);
+    const object = await bucket.get(key, rangeRequested ? { range: request.headers } : undefined);
     if (!object) return new Response("Not Found", { status: 404 });
 
     const headers = objectHeaders(object, key);
@@ -137,8 +137,8 @@ export default {
     if (url.pathname === "/audio-health") return health(env);
     if (url.pathname === "/feedback") return saveFeedback(request, env);
     if (url.pathname === "/__light-audio-index") {
-      if (!env.AUDIO) return json({ ok: false, objects: [] }, 503);
-      const listed = await env.AUDIO.list({ prefix: "light/", limit: 1000 });
+      if (!env.LIGHT_AUDIO) return json({ ok: false, objects: [] }, 503);
+      const listed = await env.LIGHT_AUDIO.list({ limit: 1000 });
       return json({ ok: true, objects: listed.objects.map(o => ({ key: o.key, size: o.size, uploaded: o.uploaded })) });
     }
 
@@ -146,14 +146,21 @@ export default {
       let key;
       try { key = decodeURIComponent(url.pathname.slice("/audio/".length)); }
       catch { return new Response("Bad Request", { status: 400 }); }
-      return serveObject(request, env, key, k => k.endsWith(".m4a"));
+      return serveObject(request, env.AUDIO, key, k => k.endsWith(".m4a"));
+    }
+
+    if (url.pathname.startsWith("/light-audio/")) {
+      let key;
+      try { key = decodeURIComponent(url.pathname.slice("/light-audio/".length)); }
+      catch { return new Response("Bad Request", { status: 400 }); }
+      return serveObject(request, env.LIGHT_AUDIO, key, k => /\.(m4a|mp3|aac|wav)$/.test(k));
     }
 
     if (url.pathname.startsWith("/media/")) {
       let key;
       try { key = decodeURIComponent(url.pathname.slice("/media/".length)); }
       catch { return new Response("Bad Request", { status: 400 }); }
-      return serveObject(request, env, key, k => /\.(webp|png|jpe?g|pdf)$/.test(k));
+      return serveObject(request, env.AUDIO, key, k => /\.(webp|png|jpe?g|pdf)$/.test(k));
     }
 
     return env.ASSETS.fetch(request);
