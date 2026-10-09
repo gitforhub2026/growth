@@ -169,6 +169,11 @@ async function serveAssetPage(request, env, url) {
 
   if (path === "/" || path === "/index.html") {
     return new HTMLRewriter()
+      .on("head", {
+        element(element) {
+          element.append('<link rel="stylesheet" href="/ux-fixes.css">', { html: true });
+        },
+      })
       .on("body", {
         element(element) {
           element.append('<script src="/ux-fixes.js"></script>', { html: true });
