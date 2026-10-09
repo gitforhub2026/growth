@@ -1,7 +1,14 @@
 /* Mobile audio control that stays with the reader while episode copy is on screen. */
 .mobile-now-player{display:none}
+
+/* Clear keyboard focus across the toolkit without changing pointer styling. */
+a:focus-visible,button:focus-visible,input:focus-visible,textarea:focus-visible,summary:focus-visible{
+  outline:3px solid rgba(47,143,180,.72)!important;
+  outline-offset:3px!important;
+}
+
 @media(max-width:760px){
-  body.mobile-now-player-visible{padding-bottom:calc(94px + env(safe-area-inset-bottom,0px))}
+  body.mobile-now-player-visible{padding-bottom:calc(100px + env(safe-area-inset-bottom,0px))}
   .mobile-now-player{
     position:fixed;
     left:10px;
@@ -69,6 +76,18 @@
     line-height:1.35;
     font-weight:900;
   }
+  .mobile-now-status{
+    display:none;
+    margin-top:2px;
+    overflow:hidden;
+    text-overflow:ellipsis;
+    white-space:nowrap;
+    color:#8a674b;
+    font-size:10px;
+    line-height:1.25;
+    font-weight:800;
+  }
+  .mobile-now-player.has-status .mobile-now-status{display:block}
   .mobile-now-time{
     align-self:end;
     color:#71858d;
@@ -80,15 +99,25 @@
   .mobile-now-seek{
     grid-column:2 / 4;
     width:100%;
-    height:18px;
-    margin:0;
+    height:28px;
+    margin:-4px 0 -5px;
     accent-color:#2f8fb4;
     cursor:pointer;
   }
 }
 @media(max-width:380px){
   .mobile-now-player{left:7px;right:7px;padding-left:9px;padding-right:9px;column-gap:9px}
-  .mobile-now-toggle{width:43px;height:43px}
+  .mobile-now-toggle{width:44px;height:44px}
   .mobile-now-title{font-size:12.5px}
   .mobile-now-time{font-size:9.5px}
+}
+
+@media(prefers-reduced-motion:reduce){
+  html{scroll-behavior:auto!important}
+  *,*::before,*::after{
+    animation-duration:.01ms!important;
+    animation-iteration-count:1!important;
+    transition-duration:.01ms!important;
+    scroll-behavior:auto!important;
+  }
 }
