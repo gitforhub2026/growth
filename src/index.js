@@ -31,6 +31,95 @@ function json(data, status = 200) {
   });
 }
 
+const NORTH_STAR_KEY = "north-star/state.json";
+const NORTH_STAR_WRITE_HASH = "732d82e5fdbeb4536d6d64cf4c3e5b3dd3216325a37bd32a6f3037b81062ed95";
+const NORTH_STAR_ALLOWED_ORIGIN = "https://page.notesss.workers.dev";
+
+function northStarCors(request) {
+  const origin = request.headers.get("origin") || "";
+  const headers = new Headers({
+    "content-type": "application/json; charset=utf-8",
+    "cache-control": "no-store",
+    "access-control-allow-methods": "GET, PUT, OPTIONS",
+    "access-control-allow-headers": "authorization, content-type",
+    "vary": "Origin",
+  });
+  if (origin === NORTH_STAR_ALLOWED_ORIGIN) headers.set("access-control-allow-origin", origin);
+  return headers;
+}
+
+function northStarResponse(request, data, status = 200) {
+  return new Response(JSON.stringify(data), { status, headers: northStarCors(request) });
+}
+
+async function sha256Hex(value) {
+  const bytes = new TextEncoder().encode(value);
+  const digest = await crypto.subtle.digest("SHA-256", bytes);
+  return [...new Uint8Array(digest)].map(b => b.toString(16).padStart(2, "0")).join("");
+}
+
+async function northStarAuthorized(request) {
+  const auth = request.headers.get("authorization") || "";
+  const token = auth.replace(/^Bearer\s+/i, "").trim();
+  if (!token) return false;
+  return (await sha256Hex(token)) === NORTH_STAR_WRITE_HASH;
+}
+
+async function northStarData(request, env) {
+  if (request.method === "OPTIONS") return new Response(null, { status: 204, headers: northStarCors(request) });
+  if (!env.AUDIO) return northStarResponse(request, { ok: false, message: "Storage unavailable" }, 503);
+
+  if (request.method === "GET") {
+    try {
+      const object = await env.AUDIO.get(NORTH_STAR_KEY);
+      if (!object) return northStarResponse(request, { ok: true, data: null });
+      const data = JSON.parse(await object.text());
+      return northStarResponse(request, { ok: true, data });
+    } catch (error) {
+      return northStarResponse(request, { ok: false, message: "讀取失敗", error: String(error) }, 500);
+    }
+  }
+
+  if (request.method === "PUT") {
+    if (!(await northStarAuthorized(request))) return northStarResponse(request, { ok: false, message: "編輯金鑰不正確" }, 401);
+
+    const contentLength = Number(request.headers.get("content-length") || 0);
+    if (contentLength > 150000) return northStarResponse(request, { ok: false, message: "資料太大" }, 413);
+
+    let body;
+    try { body = await request.json(); }
+    catch { return northStarResponse(request, { ok: false, message: "資料格式錯誤" }, 400); }
+
+    if (!body || !Array.isArray(body.tree)) return northStarResponse(request, { ok: false, message: "缺少 tree 資料" }, 400);
+
+    const record = {
+      version: 1,
+      updatedAt: new Date().toISOString(),
+      tree: body.tree,
+    };
+
+    try {
+      const previous = await env.AUDIO.get(NORTH_STAR_KEY);
+      if (previous) {
+        const oldText = await previous.text();
+        const stamp = new Date().toISOString().replace(/[:.]/g, "-");
+        await env.AUDIO.put(`north-star/backups/${stamp}.json`, oldText, {
+          httpMetadata: { contentType: "application/json; charset=utf-8" },
+        });
+      }
+
+      await env.AUDIO.put(NORTH_STAR_KEY, JSON.stringify(record, null, 2), {
+        httpMetadata: { contentType: "application/json; charset=utf-8" },
+      });
+      return northStarResponse(request, { ok: true, data: record });
+    } catch (error) {
+      return northStarResponse(request, { ok: false, message: "儲存失敗", error: String(error) }, 500);
+    }
+  }
+
+  return new Response("Method Not Allowed", { status: 405, headers: { Allow: "GET, PUT, OPTIONS" } });
+}
+
 async function health(env) {
   if (!env.AUDIO) return json({ ok: false, binding: false, object01: false }, 503);
   try {
@@ -213,6 +302,7 @@ export default {
 
     if (url.pathname === "/audio-health") return health(env);
     if (url.pathname === "/feedback") return saveFeedback(request, env);
+    if (url.pathname === "/north-star-data") return northStarData(request, env);
 
     if (url.pathname.startsWith("/audio/")) {
       let key;
