@@ -12,6 +12,7 @@
 .topic-label{color:#5f6b62!important}
 .time{color:#59645d!important}
 .mobile-picker small{color:#5f6b62!important}
+.footer-main,.footer-sub{color:#5f685f!important}
 
 .ep-meta[role="button"]:focus-visible{
   outline:3px solid rgba(49,88,68,.45);
