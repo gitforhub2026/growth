@@ -83,7 +83,6 @@
       button.setAttribute('aria-label', `${isCurrent && playing ? '暫停' : '播放'}：${rowTitle}`);
     });
 
-    const playing = !audio.paused && !audio.ended;
     playButton?.setAttribute('aria-label', playing ? '暫停本集' : '播放本集');
     coverButton?.setAttribute('aria-label', playing ? '暫停本集' : '播放本集');
   }
