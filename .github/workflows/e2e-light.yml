@@ -29,7 +29,7 @@ jobs:
         run: |
           set -euo pipefail
           curl -fsSL --retry 12 --retry-delay 10 --retry-all-errors "https://growth.notesss.workers.dev/light/?e2e=${GITHUB_SHA}" -o /tmp/light.html
-          for text in '<title>傳愛光明棧｜Podcast</title>' '公益支持│' '吳尊賢文教公益基金會' '有些事情，為什麼一直放不下？' '這一集，你會帶走' '原諒，真的是唯一的出口嗎？' '突然焦慮卡住時，如何把自己接回當下？'; do
+          for text in '<title>傳愛光明棧｜Podcast</title>' '公益支持│' '吳尊賢文教公益基金會' '有些事情，為什麼一直放不下？' '這一集，你會帶走' '原諒，真的是唯一的出口嗎？' '面對原生家庭，如何不斷聯也不委屈？' '突然焦慮卡住時，如何把自己接回當下？' "file:'13.m4a'" "file:'14.m4a'" "file:'15.m4a'"; do
             grep -Fq "$text" /tmp/light.html || { echo "Missing: $text"; exit 1; }
           done
           ! grep -Fq '目前已上架' /tmp/light.html
@@ -49,7 +49,7 @@ jobs:
             '05撕下社會名牌找回自己.m4a','06 (1).m4a','07靠微勝利走出低潮.m4a',
             '08為什麼改變了還是不被信任.m4a','09別讓過去定義你.m4a','10怎樣道歉才有效.m4a',
             '11靠微小行動走出低潮.m4a','12劃出人生停損點.m4a',
-            '13原諒是為了放過自己.m4a','14劃清家庭情緒界線.m4a','15突發焦慮接地法.m4a'
+            '13.m4a','14.m4a','15.m4a'
           ]
           base='https://growth.notesss.workers.dev/light-audio/'
           for key in keys:
