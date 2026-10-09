@@ -7,6 +7,9 @@ a:focus-visible,button:focus-visible,input:focus-visible,textarea:focus-visible,
   outline-offset:3px!important;
 }
 
+/* Keep small path-card labels readable at intermediate/tablet widths too. */
+.path-card span{color:#4f6872!important}
+
 @media(max-width:760px){
   body.mobile-now-player-visible{padding-bottom:calc(100px + env(safe-area-inset-bottom,0px))}
   .mobile-now-player{
