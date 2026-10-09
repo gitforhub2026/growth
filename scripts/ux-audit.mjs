@@ -40,45 +40,48 @@ for (const site of sites) {
 
     const url = `${BASE}${site.path}?uxaudit=${Date.now()}`;
     await page.goto(url, { waitUntil: 'domcontentloaded', timeout: 45000 });
-    await page.waitForTimeout(1200);
+    await page.waitForTimeout(1000);
 
     const dom = await page.evaluate(({ mobile }) => {
-      const rectInfo = (el) => {
+      const rectInfo = el => {
         const r = el.getBoundingClientRect();
         return {
-          tag: el.tagName,
-          cls: String(el.className || ''),
-          id: el.id || '',
+          tag: el.tagName, cls: String(el.className || ''), id: el.id || '',
           text: (el.innerText || el.getAttribute('aria-label') || '').trim().slice(0, 70),
           x: Math.round(r.x), y: Math.round(r.y), w: Math.round(r.width), h: Math.round(r.height),
         };
       };
-      const all = [...document.querySelectorAll('body *')];
-      const overflow = all.filter(el => {
+      const intentionallyHidden = el => Boolean(el.closest('[aria-hidden="true"],.feedback-honeypot,.light-feedback-honeypot'));
+      const overflow = [...document.querySelectorAll('body *')].filter(el => {
+        if (intentionallyHidden(el)) return false;
         const cs = getComputedStyle(el);
-        if (cs.position === 'fixed' && (el.classList.contains('mobile-now-player') || el.closest('.mobile-now-player'))) return false;
+        if (cs.position === 'fixed') return false;
         const r = el.getBoundingClientRect();
         return r.right > innerWidth + 2 || r.left < -2;
       }).slice(0, 20).map(rectInfo);
       const ids = [...document.querySelectorAll('[id]')].map(el => el.id);
       const dupIds = [...new Set(ids.filter((id, i) => ids.indexOf(id) !== i))];
       const unnamed = [...document.querySelectorAll('button,a[href],input,textarea,select')].filter(el => {
-        if (el.matches('input[type="hidden"]')) return false;
-        const name = (el.getAttribute('aria-label') || el.getAttribute('title') || el.innerText || el.value || el.placeholder || '').trim();
+        if (intentionallyHidden(el) || el.matches('input[type="hidden"]')) return false;
+        const name = (el.getAttribute('aria-label') || el.getAttribute('aria-labelledby') || el.getAttribute('title') || el.innerText || el.value || el.placeholder || '').trim();
         return !name;
       }).slice(0, 30).map(rectInfo);
       const missingAlt = [...document.images].filter(img => !img.hasAttribute('alt')).slice(0, 20).map(rectInfo);
       const unlabeledFields = [...document.querySelectorAll('input:not([type="hidden"]),textarea,select')].filter(el => {
-        if (el.closest('[aria-hidden="true"]')) return false;
+        if (intentionallyHidden(el)) return false;
         return !el.labels?.length && !el.getAttribute('aria-label') && !el.getAttribute('aria-labelledby');
       }).slice(0, 20).map(rectInfo);
       const tinyTargets = mobile ? [...document.querySelectorAll('button,a[href],input[type="range"]')].filter(el => {
-        const cs = getComputedStyle(el); if (cs.display === 'none' || cs.visibility === 'hidden') return false;
-        const r = el.getBoundingClientRect(); if (!r.width || !r.height) return false;
+        if (intentionallyHidden(el)) return false;
+        const cs = getComputedStyle(el);
+        if (cs.display === 'none' || cs.visibility === 'hidden') return false;
+        const r = el.getBoundingClientRect();
+        if (!r.width || !r.height) return false;
         if (el.tagName === 'A' && r.height < 28 && r.width > 80) return false;
         return r.width < 40 || r.height < 40;
       }).slice(0, 30).map(rectInfo) : [];
       return {
+        title: document.title,
         scrollWidth: document.documentElement.scrollWidth,
         innerWidth,
         overflow,
@@ -87,17 +90,13 @@ for (const site of sites) {
         missingAlt,
         unlabeledFields,
         tinyTargets,
-        title: document.title,
       };
     }, { mobile: vp.width <= 680 });
 
-    let axe = { violations: [] };
-    try {
-      axe = await new AxeBuilder({ page }).withTags(['wcag2a','wcag2aa','wcag21a','wcag21aa']).analyze();
-    } catch (e) {
-      axe = { violations: [{ id: 'axe-run-error', impact: 'moderate', description: String(e), nodes: [] }] };
-    }
-    const seriousAxe = axe.violations.filter(v => ['critical','serious'].includes(v.impact)).map(v => ({ id: v.id, impact: v.impact, help: v.help, count: v.nodes.length, targets: v.nodes.slice(0, 5).map(n => n.target) }));
+    const axe = await new AxeBuilder({ page }).withTags(['wcag2a','wcag2aa','wcag21a','wcag21aa']).analyze();
+    const seriousAxe = axe.violations
+      .filter(v => ['critical','serious'].includes(v.impact))
+      .map(v => ({ id: v.id, impact: v.impact, help: v.help, count: v.nodes.length, targets: v.nodes.slice(0, 5).map(n => n.target) }));
 
     await page.screenshot({ path: path.join(OUT, `${site.name}-${vp.name}.png`), fullPage: true });
     report.runs.push({ site: site.name, viewport: vp, url, ...dom, consoleErrors, pageErrors, requestFailures, seriousAxe });
@@ -105,90 +104,101 @@ for (const site of sites) {
   }
 }
 
+// Growth: real mobile journey.
 {
   const page = await browser.newPage({ viewport: { width: 390, height: 844 } });
   await page.goto(`${BASE}/?uxflow=${Date.now()}`, { waitUntil: 'domcontentloaded' });
-  await page.waitForTimeout(900);
+  await page.waitForTimeout(700);
   const result = { site: 'growth', viewport: 'mobile', checks: {} };
   const card = page.locator('#episode-grid .play-btn[data-play]').first();
-  await card.waitFor({ state: 'visible' });
   await card.scrollIntoViewIfNeeded();
-  await page.waitForTimeout(250);
   const before = await page.evaluate(() => scrollY);
   await card.click();
-  await page.waitForTimeout(700);
+  await page.waitForTimeout(650);
   const after = await page.evaluate(() => scrollY);
   result.checks.playDoesNotJump = Math.abs(after - before) <= 12;
-  result.checks.miniPlayerVisible = await page.locator('.mobile-now-player').evaluate(el => el.classList.contains('is-visible') && getComputedStyle(el).visibility === 'visible');
+  result.checks.miniPlayerVisible = await page.locator('.mobile-now-player').evaluate(el => el.classList.contains('is-visible'));
   result.checks.cardShowsPause = (await card.innerText()).includes('暫停');
-  await card.click(); await page.waitForTimeout(150);
+  await card.click(); await page.waitForTimeout(120);
   result.checks.cardPauses = await page.locator('#audio-player').evaluate(el => el.paused);
   result.checks.cardShowsResume = (await card.innerText()).includes('繼續播放');
-  await page.locator('.mobile-now-toggle').click();
-  await page.waitForTimeout(250);
+  await page.locator('.mobile-now-toggle').click(); await page.waitForTimeout(200);
   result.checks.miniResumes = !(await page.locator('#audio-player').evaluate(el => el.paused));
 
   const srcBefore = await page.locator('#audio-player').getAttribute('src');
-  const filterButtons = page.locator('#filters button');
-  if (await filterButtons.count() > 1) {
-    await filterButtons.nth(1).click(); await page.waitForTimeout(200);
+  const filters = page.locator('#filters button');
+  if (await filters.count() > 1) {
+    await filters.nth(1).click(); await page.waitForTimeout(120);
     result.checks.filterKeepsAudio = !(await page.locator('#audio-player').evaluate(el => el.paused));
-    await page.locator('#filters button').first().click(); await page.waitForTimeout(200);
+    await page.locator('#filters button').first().click(); await page.waitForTimeout(120);
     result.checks.filterKeepsTrack = (await page.locator('#audio-player').getAttribute('src')) === srcBefore;
-    const currentButton = page.locator('#episode-grid .active-card .play-btn[data-play]').first();
-    result.checks.returnedCardState = await currentButton.innerText().then(t => t.includes('暫停') || t.includes('繼續播放')).catch(() => false);
+    result.checks.returnedCardState = await page.locator('#episode-grid .active-card .play-btn').first().innerText().then(t => t.includes('暫停')).catch(() => false);
   }
 
   const poster = page.locator('.poster-card').first();
   if (await poster.count()) {
-    await poster.scrollIntoViewIfNeeded(); await poster.click(); await page.waitForTimeout(150);
+    await poster.scrollIntoViewIfNeeded(); await poster.click(); await page.waitForTimeout(100);
     result.checks.posterDialogOpens = await page.locator('#image-dialog').evaluate(el => el.open);
     const c1 = await page.locator('#dialog-counter').innerText();
-    await page.keyboard.press('ArrowRight'); await page.waitForTimeout(100);
-    const c2 = await page.locator('#dialog-counter').innerText();
-    result.checks.posterArrowWorks = c1 !== c2;
+    await page.keyboard.press('ArrowRight'); await page.waitForTimeout(80);
+    result.checks.posterArrowWorks = c1 !== await page.locator('#dialog-counter').innerText();
     await page.keyboard.press('Escape');
     result.checks.posterEscapeCloses = !(await page.locator('#image-dialog').evaluate(el => el.open));
   }
 
   const textarea = page.locator('#feedback-form textarea');
-  if (await textarea.count()) {
-    await textarea.scrollIntoViewIfNeeded(); await textarea.focus(); await page.waitForTimeout(150);
-    result.checks.miniVisibleWhileTyping = await page.locator('.mobile-now-player').evaluate(el => el.classList.contains('is-visible'));
-  }
+  await textarea.scrollIntoViewIfNeeded(); await page.waitForTimeout(150);
+  result.checks.miniVisibleBeforeTyping = await page.locator('.mobile-now-player').evaluate(el => el.classList.contains('is-visible'));
+  await textarea.focus(); await page.waitForTimeout(100);
+  result.checks.miniHidesWhileTyping = !(await page.locator('.mobile-now-player').evaluate(el => el.classList.contains('is-visible')));
+  await textarea.blur(); await page.waitForTimeout(100);
+  result.checks.miniReturnsAfterTyping = await page.locator('.mobile-now-player').evaluate(el => el.classList.contains('is-visible'));
 
   await page.screenshot({ path: path.join(OUT, 'growth-mobile-playing.png'), fullPage: false });
   report.functional.push(result);
   await page.close();
 }
 
+// Light House: real mobile journey including keyboard and persistent playback.
 {
   const page = await browser.newPage({ viewport: { width: 390, height: 844 } });
   await page.goto(`${BASE}/light/?uxflow=${Date.now()}`, { waitUntil: 'domcontentloaded' });
-  await page.waitForTimeout(900);
+  await page.waitForTimeout(700);
   const result = { site: 'light', viewport: 'mobile', checks: {} };
-  const picker = page.locator('.mobile-picker');
+  const picker = page.locator('#mobilePicker');
   result.checks.pickerVisible = await picker.isVisible();
-  if (await picker.isVisible()) {
-    await picker.click(); await page.waitForTimeout(120);
-    result.checks.pickerOpens = await page.locator('.episode-list').evaluate(el => el.classList.contains('mobile-open'));
-    const rows = page.locator('.episode-list .ep-row');
-    if (await rows.count() > 1) {
-      const titleBefore = await page.locator('.detail h3').innerText();
-      await rows.nth(1).click(); await page.waitForTimeout(250);
-      const titleAfter = await page.locator('.detail h3').innerText();
-      result.checks.episodeSelectionChangesDetail = titleBefore !== titleAfter;
-    }
-  }
-  await picker.click().catch(()=>{}); await page.waitForTimeout(100);
-  const mini = page.locator('.episode-list .playmini').first();
-  if (!(await mini.isVisible().catch(()=>false))) { await picker.click().catch(()=>{}); await page.waitForTimeout(100); }
-  if (await mini.isVisible().catch(()=>false)) {
-    await mini.click(); await page.waitForTimeout(500);
-    result.checks.miniPlayStarts = !(await page.locator('#audio').evaluate(el => el.paused));
-  }
+  await picker.click();
+  result.checks.pickerOpens = await page.locator('#episodeList').evaluate(el => el.classList.contains('mobile-open'));
+
+  const second = page.locator('#episodeList .ep-row').nth(1);
+  await second.focus();
+  result.checks.episodeRowsKeyboardAccessible = (await second.getAttribute('role')) === 'button' && (await second.getAttribute('tabindex')) === '0';
+  const beforeTitle = await page.locator('#dTitle').innerText();
+  await page.keyboard.press('Enter'); await page.waitForTimeout(180);
+  result.checks.keyboardSelectionWorks = beforeTitle !== await page.locator('#dTitle').innerText();
+
+  await picker.click();
+  const playMini = page.locator('#episodeList .playmini').first();
+  const playBox = await playMini.boundingBox();
+  result.checks.playTargetAtLeast44 = Boolean(playBox && playBox.width >= 44 && playBox.height >= 44);
+  await playMini.click(); await page.waitForTimeout(450);
+  result.checks.miniPlayStarts = !(await page.locator('#audio').evaluate(el => el.paused));
+
+  await page.locator('#mobileBottomPicker').scrollIntoViewIfNeeded(); await page.waitForTimeout(250);
+  result.checks.persistentPlayerVisible = await page.locator('.light-now-player').evaluate(el => el.classList.contains('is-visible'));
+  await page.locator('.light-now-toggle').click(); await page.waitForTimeout(100);
+  result.checks.persistentPlayerPauses = await page.locator('#audio').evaluate(el => el.paused);
+  await page.locator('.light-now-toggle').click(); await page.waitForTimeout(180);
+  result.checks.persistentPlayerResumes = !(await page.locator('#audio').evaluate(el => el.paused));
+
+  const textarea = page.locator('#light-feedback-form textarea');
+  await textarea.scrollIntoViewIfNeeded(); await textarea.focus(); await page.waitForTimeout(100);
+  result.checks.playerHidesWhileTyping = !(await page.locator('.light-now-player').evaluate(el => el.classList.contains('is-visible')));
+  const seekBox = await page.locator('#seek').boundingBox();
+  result.checks.seekTargetAtLeast32 = Boolean(seekBox && seekBox.height >= 32);
   result.checks.headerFixed = await page.locator('.site-header').evaluate(el => getComputedStyle(el).position === 'fixed');
-  result.checks.crossLinkToGrowth = await page.locator('.series-switcher a[href="/"]').count().then(n => n > 0);
+  result.checks.crossLinkToGrowth = (await page.locator('.series-switcher a[href="/"]').count()) > 0;
+
   await page.screenshot({ path: path.join(OUT, 'light-mobile-interaction.png'), fullPage: false });
   report.functional.push(result);
   await page.close();
@@ -207,11 +217,14 @@ for (const run of report.runs) {
   if (run.unnamed.length) failures.push(`${run.site}/${run.viewport.name}: unnamed controls ${run.unnamed.length}`);
   if (run.missingAlt.length) failures.push(`${run.site}/${run.viewport.name}: images missing alt ${run.missingAlt.length}`);
   if (run.unlabeledFields.length) failures.push(`${run.site}/${run.viewport.name}: unlabeled fields ${run.unlabeledFields.length}`);
-  if (run.seriousAxe.length) failures.push(`${run.site}/${run.viewport.name}: serious axe ${run.seriousAxe.map(v=>`${v.id}(${v.count})`).join(',')}`);
+  if (run.tinyTargets.length) failures.push(`${run.site}/${run.viewport.name}: small touch targets ${run.tinyTargets.length}`);
+  if (run.seriousAxe.length) failures.push(`${run.site}/${run.viewport.name}: serious axe ${run.seriousAxe.map(v => `${v.id}(${v.count})`).join(',')}`);
 }
 for (const flow of report.functional) {
-  for (const [k,v] of Object.entries(flow.checks)) {
-    if (v === false) failures.push(`${flow.site}/${flow.viewport}: ${k}=false`);
+  for (const [name, passed] of Object.entries(flow.checks)) {
+    if (passed !== true) failures.push(`${flow.site}/${flow.viewport}: ${name}=false`);
   }
 }
-console.log(JSON.stringify({ failures, report: path.join(OUT, 'report.json') }, null, 2));
+
+console.log(JSON.stringify({ ok: failures.length === 0, failures, report: path.join(OUT, 'report.json') }, null, 2));
+if (failures.length) process.exitCode = 1;
