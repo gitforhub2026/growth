@@ -6,6 +6,7 @@ on:
     paths:
       - 'public/light/**'
       - 'src/**'
+      - 'wrangler.jsonc'
       - '.github/workflows/e2e-light.yml'
   workflow_dispatch:
 
@@ -16,14 +17,6 @@ jobs:
     steps:
       - name: Wait for Cloudflare Git deployment
         run: sleep 45
-      - name: Inspect light audio objects
-        shell: bash
-        run: |
-          set -euo pipefail
-          echo 'LIGHT_AUDIO_INDEX_BEGIN'
-          curl -fsSL --retry 12 --retry-delay 10 --retry-all-errors https://growth.notesss.workers.dev/__light-audio-index
-          echo
-          echo 'LIGHT_AUDIO_INDEX_END'
       - name: Verify homepage remains intact
         shell: bash
         run: |
@@ -31,15 +24,43 @@ jobs:
           curl -fsSL --retry 12 --retry-delay 10 --retry-all-errors https://growth.notesss.workers.dev/ -o /tmp/root.html
           grep -q '傳愛成長工具箱' /tmp/root.html
           ! grep -q '<title>傳愛光明棧｜Podcast</title>' /tmp/root.html
-      - name: Verify light page and hero asset
+      - name: Verify light page structure
         shell: bash
         run: |
           set -euo pipefail
           curl -fsSL --retry 12 --retry-delay 10 --retry-all-errors https://growth.notesss.workers.dev/light/ -o /tmp/light.html
           grep -q '<title>傳愛光明棧｜Podcast</title>' /tmp/light.html
+          grep -q '公益支持│' /tmp/light.html
+          grep -q '吳尊賢文教公益基金會' /tmp/light.html
+          grep -q '目前已上架 12 個主題' /tmp/light.html
+          grep -q '為人生畫出停損點' /tmp/light.html
+          ! grep -q '搜尋集數或主題' /tmp/light.html
+          ! grep -q '>節目介紹<' /tmp/light.html
           curl -fsSL --retry 12 --retry-delay 10 --retry-all-errors https://growth.notesss.workers.dev/light/assets/hero.webp -o /tmp/hero.webp
           test -s /tmp/hero.webp
           file /tmp/hero.webp | grep -qi 'Web/P image\|WebP'
+      - name: Verify all 12 R2 audio objects are reachable
+        shell: bash
+        run: |
+          set -euo pipefail
+          python - <<'PY'
+          import urllib.parse, urllib.request
+          keys = [
+            '01 (1).m4a','02 (1).m4a','03修復不等於和好.m4a','04 (1).m4a',
+            '05撕下社會名牌找回自己.m4a','06 (1).m4a','07靠微勝利走出低潮.m4a',
+            '08為什麼改變了還是不被信任.m4a','09別讓過去定義你.m4a','10怎樣道歉才有效.m4a',
+            '11靠微小行動走出低潮.m4a','12劃出人生停損點.m4a'
+          ]
+          base='https://growth.notesss.workers.dev/light-audio/'
+          for key in keys:
+              url=base+urllib.parse.quote(key, safe='')
+              req=urllib.request.Request(url, method='HEAD')
+              with urllib.request.urlopen(req, timeout=20) as r:
+                  assert r.status == 200, (key, r.status)
+                  ctype=r.headers.get('content-type','')
+                  assert ctype.startswith('audio/'), (key, ctype)
+                  print('OK', key, ctype, r.headers.get('content-length'))
+          PY
       - name: Verify route isolation
         shell: bash
         run: |
