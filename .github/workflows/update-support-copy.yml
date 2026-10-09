@@ -1,0 +1,38 @@
+name: Update Light support copy
+
+on:
+  push:
+    branches: [main]
+
+permissions:
+  contents: write
+
+jobs:
+  update:
+    if: github.event.head_commit.message == 'Update Light support thanks'
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@v4
+        with:
+          fetch-depth: 0
+      - name: Update header support wording
+        run: |
+          python - <<'PY'
+          from pathlib import Path
+          p = Path('public/light/index.html')
+          s = p.read_text(encoding='utf-8')
+          old = '<span class="support-desktop">公益支持│<b>吳尊賢文教公益基金會</b></span>'
+          new = '<span class="support-desktop">感謝<b>公益支持│吳尊賢文教公益基金會</b></span>'
+          if old not in s:
+              raise SystemExit('Target support copy not found')
+          s = s.replace(old, new, 1)
+          p.write_text(s, encoding='utf-8')
+          PY
+          grep -Fq '<span class="support-desktop">感謝<b>公益支持│吳尊賢文教公益基金會</b></span>' public/light/index.html
+      - name: Commit site change
+        run: |
+          git config user.name "github-actions[bot]"
+          git config user.email "41898282+github-actions[bot]@users.noreply.github.com"
+          git add public/light/index.html
+          git commit -m "Thank公益 support in Light header"
+          git push
