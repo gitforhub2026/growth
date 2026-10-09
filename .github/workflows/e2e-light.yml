@@ -39,7 +39,7 @@ jobs:
           curl -fsSL --retry 12 --retry-delay 10 --retry-all-errors https://growth.notesss.workers.dev/light/assets/hero.webp -o /tmp/hero.webp
           test -s /tmp/hero.webp
           file /tmp/hero.webp | grep -qi 'Web/P image\|WebP'
-      - name: Verify all 12 R2 audio objects are reachable
+      - name: Verify all 12 R2 audio objects are streamable
         shell: bash
         run: |
           set -euo pipefail
@@ -54,12 +54,18 @@ jobs:
           base='https://growth.notesss.workers.dev/light-audio/'
           for key in keys:
               url=base+urllib.parse.quote(key, safe='')
-              req=urllib.request.Request(url, method='HEAD')
-              with urllib.request.urlopen(req, timeout=20) as r:
-                  assert r.status == 200, (key, r.status)
+              req=urllib.request.Request(url, headers={
+                  'User-Agent':'Mozilla/5.0 (X11; Linux x86_64) AppleWebKit/537.36 Chrome/155 Safari/537.36',
+                  'Range':'bytes=0-1023',
+                  'Accept':'*/*'
+              }, method='GET')
+              with urllib.request.urlopen(req, timeout=30) as r:
+                  assert r.status in (200,206), (key, r.status)
                   ctype=r.headers.get('content-type','')
                   assert ctype.startswith('audio/'), (key, ctype)
-                  print('OK', key, ctype, r.headers.get('content-length'))
+                  data=r.read(1024)
+                  assert data, key
+                  print('OK', key, r.status, ctype, len(data))
           PY
       - name: Verify route isolation
         shell: bash
