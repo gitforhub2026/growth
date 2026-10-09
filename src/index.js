@@ -62,6 +62,8 @@ async function saveFeedback(request, env) {
   const name = String(body.name || "").trim().slice(0, 80);
   const contact = String(body.contact || "").trim().slice(0, 160);
   const message = String(body.message || "").trim();
+  const page = request.headers.get("referer") || "";
+  const source = body.source === "light-house" || page.includes("/light/") ? "light-house" : "growth-toolkit";
 
   if (message.length < 2) return json({ ok: false, message: "請留下一點想告訴我們的內容。" }, 400);
   if (message.length > 2500) return json({ ok: false, message: "內容太長，請控制在 2500 字以內。" }, 400);
@@ -76,15 +78,16 @@ async function saveFeedback(request, env) {
     name,
     contact,
     message,
+    source,
     createdAt: now.toISOString(),
-    page: request.headers.get("referer") || "",
+    page,
     userAgent: (request.headers.get("user-agent") || "").slice(0, 300),
   };
 
   try {
     await env.AUDIO.put(key, JSON.stringify(record, null, 2), {
       httpMetadata: { contentType: "application/json; charset=utf-8" },
-      customMetadata: { source: "growth-toolkit" },
+      customMetadata: { source },
     });
     return json({ ok: true, message: "謝謝你的建議，我們收到了。" });
   } catch (error) {
@@ -133,6 +136,70 @@ async function serveObject(request, bucket, key, allowed) {
   }
 }
 
+const LIGHT_FEEDBACK_MARKUP = `
+<section class="light-feedback" aria-labelledby="light-feedback-title">
+  <div class="light-feedback-mark" aria-hidden="true">✎</div>
+  <div class="light-feedback-copy">
+    <div class="eyebrow">CONTACT · SUGGESTIONS</div>
+    <h2 id="light-feedback-title">歡迎留下建議</h2>
+    <p>如果有收聽心得、想聽的主題，或希望我們增加哪一類內容，都可以直接告訴我們。</p>
+    <form class="light-feedback-form" id="light-feedback-form">
+      <div class="light-feedback-fields">
+        <label><span>怎麼稱呼您？ <small>選填</small></span><input type="text" name="name" maxlength="80" autocomplete="name" placeholder="姓名／暱稱"></label>
+        <label><span>Email／聯絡方式 <small>選填</small></span><input type="text" name="contact" maxlength="160" autocomplete="email" placeholder="方便回覆時再留下即可"></label>
+      </div>
+      <label><span>想告訴我們什麼？</span><textarea name="message" required minlength="2" maxlength="2500" rows="5" placeholder="收聽心得、想聽的主題、內容建議……"></textarea></label>
+      <label class="light-feedback-honeypot" aria-hidden="true">網站<input type="text" name="website" tabindex="-1" autocomplete="off"></label>
+      <div class="light-feedback-submit-row">
+        <button class="light-feedback-submit" type="submit">送出建議</button>
+        <div class="light-feedback-status" id="light-feedback-status" role="status" aria-live="polite"></div>
+      </div>
+    </form>
+  </div>
+</section>`;
+
+async function serveAssetPage(request, env, url) {
+  const response = await env.ASSETS.fetch(request);
+  if (request.method !== "GET" || !response.ok) return response;
+
+  const contentType = response.headers.get("content-type") || "";
+  if (!contentType.includes("text/html")) return response;
+
+  const path = url.pathname.replace(/\/+$/, "") || "/";
+
+  if (path === "/" || path === "/index.html") {
+    return new HTMLRewriter()
+      .on("body", {
+        element(element) {
+          element.append('<script src="/ux-fixes.js"></script>', { html: true });
+        },
+      })
+      .transform(response);
+  }
+
+  if (path === "/light" || path === "/light/index.html") {
+    return new HTMLRewriter()
+      .on("head", {
+        element(element) {
+          element.append('<link rel="stylesheet" href="/light-feedback.css">', { html: true });
+        },
+      })
+      .on("footer.footer", {
+        element(element) {
+          element.before(LIGHT_FEEDBACK_MARKUP, { html: true });
+        },
+      })
+      .on("body", {
+        element(element) {
+          element.append('<script src="/light-feedback.js"></script>', { html: true });
+        },
+      })
+      .transform(response);
+  }
+
+  return response;
+}
+
 export default {
   async fetch(request, env) {
     const url = new URL(request.url);
@@ -161,6 +228,6 @@ export default {
       return serveObject(request, env.AUDIO, key, k => /\.(webp|png|jpe?g|pdf)$/.test(k));
     }
 
-    return env.ASSETS.fetch(request);
+    return serveAssetPage(request, env, url);
   },
 };
