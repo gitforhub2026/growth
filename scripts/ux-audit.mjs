@@ -19,6 +19,7 @@ const sites = [
 ];
 
 const report = { generatedAt: new Date().toISOString(), base: BASE, runs: [], functional: [] };
+const saveReport = () => fs.writeFileSync(path.join(OUT, 'report.json'), JSON.stringify(report, null, 2));
 const browser = await chromium.launch({
   executablePath: process.env.CHROME_BIN,
   headless: true,
@@ -109,6 +110,7 @@ for (const site of sites) {
     await context.close();
   }
 }
+saveReport();
 
 // Growth: real mobile journey.
 {
@@ -163,6 +165,7 @@ for (const site of sites) {
 
   await page.screenshot({ path: path.join(OUT, 'growth-mobile-playing.png'), fullPage: false });
   report.functional.push(result);
+  saveReport();
   await context.close();
 }
 
@@ -193,13 +196,23 @@ for (const site of sites) {
   result.checks.miniPlayStarts = !(await page.locator('#audio').evaluate(el => el.paused));
   await page.waitForTimeout(300);
   const t1 = await page.locator('#audio').evaluate(el => el.currentTime);
-  await playMini.click(); await page.waitForTimeout(120);
+
+  // Direct play closes the mobile picker by design. Re-open it before using the
+  // same row control again, just as a listener would.
+  await picker.click(); await page.waitForTimeout(120);
+  const currentPlayMini = page.locator('#episodeList .playmini').first();
+  await currentPlayMini.click(); await page.waitForTimeout(120);
   result.checks.listPlayPausesCurrent = await page.locator('#audio').evaluate(el => el.paused);
   const pausedAt = await page.locator('#audio').evaluate(el => el.currentTime);
-  await playMini.click(); await page.waitForTimeout(220);
+  await currentPlayMini.click(); await page.waitForTimeout(220);
   const resumedAt = await page.locator('#audio').evaluate(el => el.currentTime);
   result.checks.listPlayResumesWithoutRestart = resumedAt >= Math.max(0, pausedAt - 0.15) && pausedAt >= Math.max(0, t1 - 0.15);
 
+  // Close the picker before following the episode body so the persistent player
+  // can take over once the inline player leaves the viewport.
+  if (await page.locator('#episodeList').evaluate(el => el.classList.contains('mobile-open'))) {
+    await picker.click(); await page.waitForTimeout(100);
+  }
   await page.locator('#mobileBottomPicker').scrollIntoViewIfNeeded(); await page.waitForTimeout(250);
   result.checks.persistentPlayerVisible = await page.locator('.light-now-player').evaluate(el => el.classList.contains('is-visible'));
   await page.locator('.light-now-toggle').click(); await page.waitForTimeout(100);
@@ -217,6 +230,7 @@ for (const site of sites) {
 
   await page.screenshot({ path: path.join(OUT, 'light-mobile-interaction.png'), fullPage: false });
   report.functional.push(result);
+  saveReport();
   await context.close();
 }
 
@@ -240,6 +254,7 @@ for (const site of sites) {
   await card.click(); await page.waitForTimeout(100);
   result.checks.cardPauses = await page.locator('#audio-player').evaluate(el => el.paused);
   report.functional.push(result);
+  saveReport();
   await context.close();
 }
 
@@ -267,11 +282,12 @@ for (const site of sites) {
   await page.locator('#speedBtn').click();
   result.checks.speedControlWorks = speedBefore !== await page.locator('#speedBtn').innerText();
   report.functional.push(result);
+  saveReport();
   await context.close();
 }
 
 await browser.close();
-fs.writeFileSync(path.join(OUT, 'report.json'), JSON.stringify(report, null, 2));
+saveReport();
 
 const failures = [];
 for (const run of report.runs) {
