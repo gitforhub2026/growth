@@ -25,11 +25,6 @@ const browser = await chromium.launch({
   args: ['--no-sandbox', '--autoplay-policy=no-user-gesture-required'],
 });
 
-function rectInfo(el) {
-  const r = el.getBoundingClientRect();
-  return { tag: el.tagName, cls: String(el.className || ''), id: el.id || '', text: (el.innerText || el.getAttribute('aria-label') || '').trim().slice(0, 70), x: Math.round(r.x), y: Math.round(r.y), w: Math.round(r.width), h: Math.round(r.height) };
-}
-
 for (const site of sites) {
   for (const vp of viewports) {
     const page = await browser.newPage({ viewport: { width: vp.width, height: vp.height } });
@@ -48,6 +43,16 @@ for (const site of sites) {
     await page.waitForTimeout(1200);
 
     const dom = await page.evaluate(({ mobile }) => {
+      const rectInfo = (el) => {
+        const r = el.getBoundingClientRect();
+        return {
+          tag: el.tagName,
+          cls: String(el.className || ''),
+          id: el.id || '',
+          text: (el.innerText || el.getAttribute('aria-label') || '').trim().slice(0, 70),
+          x: Math.round(r.x), y: Math.round(r.y), w: Math.round(r.width), h: Math.round(r.height),
+        };
+      };
       const all = [...document.querySelectorAll('body *')];
       const overflow = all.filter(el => {
         const cs = getComputedStyle(el);
@@ -100,7 +105,6 @@ for (const site of sites) {
   }
 }
 
-// Growth functional flow on mobile.
 {
   const page = await browser.newPage({ viewport: { width: 390, height: 844 } });
   await page.goto(`${BASE}/?uxflow=${Date.now()}`, { waitUntil: 'domcontentloaded' });
@@ -124,18 +128,17 @@ for (const site of sites) {
   await page.waitForTimeout(250);
   result.checks.miniResumes = !(await page.locator('#audio-player').evaluate(el => el.paused));
 
-  // Filter while playing should not stop audio or lose current episode state when returning.
   const srcBefore = await page.locator('#audio-player').getAttribute('src');
   const filterButtons = page.locator('#filters button');
   if (await filterButtons.count() > 1) {
     await filterButtons.nth(1).click(); await page.waitForTimeout(200);
     result.checks.filterKeepsAudio = !(await page.locator('#audio-player').evaluate(el => el.paused));
-    await filterButtons.first().click(); await page.waitForTimeout(200);
+    await page.locator('#filters button').first().click(); await page.waitForTimeout(200);
     result.checks.filterKeepsTrack = (await page.locator('#audio-player').getAttribute('src')) === srcBefore;
-    result.checks.returnedCardState = await page.locator('#episode-grid .play-btn[data-play]').first().innerText().then(t => t.includes('暫停') || t.includes('繼續播放')).catch(() => false);
+    const currentButton = page.locator('#episode-grid .active-card .play-btn[data-play]').first();
+    result.checks.returnedCardState = await currentButton.innerText().then(t => t.includes('暫停') || t.includes('繼續播放')).catch(() => false);
   }
 
-  // Poster dialog: open, arrow navigation, escape close.
   const poster = page.locator('.poster-card').first();
   if (await poster.count()) {
     await poster.scrollIntoViewIfNeeded(); await poster.click(); await page.waitForTimeout(150);
@@ -148,7 +151,6 @@ for (const site of sites) {
     result.checks.posterEscapeCloses = !(await page.locator('#image-dialog').evaluate(el => el.open));
   }
 
-  // Feedback field + mini player coexistence.
   const textarea = page.locator('#feedback-form textarea');
   if (await textarea.count()) {
     await textarea.scrollIntoViewIfNeeded(); await textarea.focus(); await page.waitForTimeout(150);
@@ -160,7 +162,6 @@ for (const site of sites) {
   await page.close();
 }
 
-// Light House functional flow on mobile + desktop semantics.
 {
   const page = await browser.newPage({ viewport: { width: 390, height: 844 } });
   await page.goto(`${BASE}/light/?uxflow=${Date.now()}`, { waitUntil: 'domcontentloaded' });
@@ -179,14 +180,12 @@ for (const site of sites) {
       result.checks.episodeSelectionChangesDetail = titleBefore !== titleAfter;
     }
   }
+  await picker.click().catch(()=>{}); await page.waitForTimeout(100);
   const mini = page.locator('.episode-list .playmini').first();
-  if (await mini.count()) {
-    await picker.click().catch(()=>{}); await page.waitForTimeout(100);
-    if (!(await mini.isVisible())) { await picker.click().catch(()=>{}); await page.waitForTimeout(100); }
-    if (await mini.isVisible()) {
-      await mini.click(); await page.waitForTimeout(500);
-      result.checks.miniPlayStarts = !(await page.locator('#audio').evaluate(el => el.paused));
-    }
+  if (!(await mini.isVisible().catch(()=>false))) { await picker.click().catch(()=>{}); await page.waitForTimeout(100); }
+  if (await mini.isVisible().catch(()=>false)) {
+    await mini.click(); await page.waitForTimeout(500);
+    result.checks.miniPlayStarts = !(await page.locator('#audio').evaluate(el => el.paused));
   }
   result.checks.headerFixed = await page.locator('.site-header').evaluate(el => getComputedStyle(el).position === 'fixed');
   result.checks.crossLinkToGrowth = await page.locator('.series-switcher a[href="/"]').count().then(n => n > 0);
@@ -216,4 +215,3 @@ for (const flow of report.functional) {
   }
 }
 console.log(JSON.stringify({ failures, report: path.join(OUT, 'report.json') }, null, 2));
-// Audit is diagnostic: always upload the report; blocking regressions remain in e2e-light.yml.
