@@ -81,8 +81,6 @@
     document.body.classList.toggle('mobile-now-player-visible', visible);
   }
 
-  // The full player is already useful when it is on screen. The compact bar only
-  // appears after the reader has moved away from it.
   const observer = new IntersectionObserver((entries) => {
     const entry = entries[0];
     mainPlayerVisible = Boolean(entry?.isIntersecting && entry.intersectionRatio >= 0.18);
@@ -90,9 +88,6 @@
   }, { threshold: [0, 0.18, 0.5] });
   observer.observe(mainPanel);
 
-  // The original card handler scrolls the full player into view. Intercept it.
-  // Tapping the current card again toggles pause/resume in place; choosing a new
-  // episode switches tracks without moving the reader's viewport.
   document.addEventListener('click', (event) => {
     const button = event.target.closest?.('#episode-grid .play-btn[data-play]');
     if (!button) return;
@@ -108,7 +103,9 @@
     if (sameEpisode && !player.paused && !player.ended) {
       player.pause();
     } else if (sameEpisode && player.currentSrc) {
-      player.play().catch(() => {});
+      const promise = player.play();
+      updateMiniContent();
+      promise?.catch(() => updateMiniContent());
     } else {
       selectEpisode(button.dataset.play, true, false);
     }
@@ -125,8 +122,15 @@
 
   miniToggle.addEventListener('click', () => {
     userActivatedAudio = true;
-    if (player.paused || player.ended) player.play().catch(() => {});
-    else player.pause();
+    if (player.paused || player.ended) {
+      const promise = player.play();
+      updateMiniContent();
+      promise?.catch(() => updateMiniContent());
+    } else {
+      player.pause();
+      updateMiniContent();
+    }
+    updateMiniVisibility();
   });
 
   miniSeek.addEventListener('input', () => {
@@ -135,8 +139,6 @@
     updateMiniContent();
   });
 
-  // If playback starts from the full player, the compact control should still
-  // follow the reader once they scroll down into the episode copy.
   player.addEventListener('play', () => {
     userActivatedAudio = true;
     updateMiniContent();
