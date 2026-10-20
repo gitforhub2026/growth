@@ -37,18 +37,54 @@
   .series-switcher .podcast-word{display:none}
 }
 @media(max-width:390px){.series-switcher a{padding:7px 8px;font-size:11px}}
-/* Keep the foundation acknowledgement visible in the podcast header on mobile. */
+/* Keep acknowledgement immediately beside the podcast logo, without a second credit row. */
+.site-header .header-identity{display:flex;align-items:center;gap:17px;min-width:0}
+.site-header .header-identity .brand{flex:0 0 auto}
+.site-header .header-identity .support.support-uniform{
+  display:flex!important;flex-direction:column!important;align-items:flex-start!important;
+  justify-content:center!important;gap:3px!important;flex:0 0 auto!important;
+  margin:0!important;white-space:nowrap!important;text-align:left!important;
+  line-height:1.3!important;letter-spacing:0!important
+}
+.site-header .support-kicker{display:block;font-size:10px!important;font-weight:600!important;color:#7a877e;letter-spacing:.08em!important}
+.site-header .support-name{display:block;font-size:12.5px!important;font-weight:750!important;color:#51635a;letter-spacing:.01em!important}
+.site-header .topbar>.series-switcher{margin-left:auto!important}
 @media(max-width:760px){
-  html{scroll-padding-top:100px}
-  body{padding-top:100px}
-  .site-header .topbar{height:100px!important;flex-wrap:wrap!important;align-content:center!important;gap:2px 8px!important}
-  .site-header .support{display:block!important;order:3;flex:0 0 100%;text-align:center!important;font-size:12px!important;line-height:1.4!important;white-space:nowrap!important;letter-spacing:.01em!important}
+  html{scroll-padding-top:74px}
+  body{padding-top:70px}
+  .site-header .topbar{height:70px!important;flex-wrap:nowrap!important;align-content:normal!important;gap:6px!important}
+  .site-header .header-identity{gap:8px!important}
+  .site-header .header-identity .brand-text{font-size:17px!important;letter-spacing:.01em!important}
+  .site-header .header-identity .sprout{font-size:20px!important}
+  .site-header .support-kicker{font-size:9px!important}
+  .site-header .support-name{font-size:10.5px!important}
+  .series-switcher a{padding:7px 8px;font-size:11px}
+  .series-switcher a.switch-other:before{content:none}
+}
+@media(max-width:390px){
+  .site-header .header-identity{gap:6px!important}
+  .site-header .header-identity .brand-text{font-size:15px!important}
+  .site-header .header-identity .brand{gap:4px!important}
+  .site-header .header-identity .sprout{font-size:17px!important}
+  .site-header .support-name{font-size:10px!important}
+  .series-switcher a{padding:6px 7px;font-size:10.5px}
+}
+@media(max-width:340px){
+  .site-header .header-identity .brand-text{font-size:14px!important}
+  .site-header .support-name{font-size:9.5px!important}
+  .series-switcher a{padding:5px 6px;font-size:10px}
 }
 </style>
 
 </head>
 <body>
-<header class="site-header"><div class="shell topbar"><a class="brand" href="/light/"><span class="sprout">🌱</span><span class="brand-text">傳愛光明棧<small>PODCAST</small></span></a><nav class="series-switcher" aria-label="傳愛系列切換"><span class="series-label">傳愛系列</span><a class="switch-other" href="/" aria-label="前往傳愛成長工具箱">成長工具箱<span class="switch-arrow">→</span></a><a class="is-active" href="/light/" aria-current="page">光明棧 <span class="podcast-word">Podcast</span></a></nav><div class="support support-uniform">感謝支持：吳尊賢文教公益基金會</div></div></header>
+<header class="site-header"><div class="shell topbar">
+  <div class="header-identity">
+    <a class="brand" href="/light/"><span class="sprout">🌱</span><span class="brand-text">傳愛光明棧<small>PODCAST</small></span></a>
+    <div class="support support-uniform" aria-label="感謝支持：吳尊賢文教公益基金會"><span class="support-kicker">感謝支持</span><span class="support-name">吳尊賢文教公益基金會</span></div>
+  </div>
+  <nav class="series-switcher" aria-label="傳愛系列切換"><span class="series-label">傳愛系列</span><a class="switch-other" href="/" aria-label="前往傳愛成長工具箱">成長工具箱<span class="switch-arrow">→</span></a><a class="is-active" href="/light/" aria-current="page">光明棧 <span class="podcast-word">Podcast</span></a></nav>
+</div></header>
 <main class="shell">
 <section class="hero"><div class="hero-grid"><div class="hero-copy"><div class="eyebrow">LIGHT HOUSE · PODCAST</div><h1>傳愛<br>光明棧</h1><p>在生活的轉彎處，陪你看見一點光。</p><div class="sub">給正在努力生活的你，一段可以慢慢聽的陪伴。</div></div><div class="hero-art"><img src="assets/hero.webp" alt="陽光下的孩子與花朵"><div class="doodle">一段聲音的陪伴，<br>給正在努力生活的你。</div></div></div></section>
 <section><div class="section-head"><h2>選一集，慢慢聽</h2><p>選一個此刻最靠近你的題目，讓這段陪伴陪你走一會兒。</p></div><div class="content"><button class="mobile-picker" id="mobilePicker" type="button" aria-expanded="false"><span><b>選擇其他集數</b><small>找到此刻想聽的一集</small></span><span class="picker-arrow">⌄</span></button><aside class="episode-list" id="episodeList"></aside><article class="detail" id="detail"><div class="detail-top"><button class="navbtn" id="prevBtn">← 上一集</button><button class="navbtn" id="nextBtn">下一集 →</button></div><div class="detail-hero"><button class="cover" id="coverBtn" aria-label="播放本集"></button><div><div class="topic-label">PODCAST</div><h3 id="dTitle"></h3><div class="subtitle" id="dSubtitle"></div><div class="tags" id="dTags"></div></div></div><audio id="audio" preload="metadata"></audio><div class="player"><button class="play" id="playBtn" aria-label="播放">▶</button><div class="progress-wrap"><input class="seek" id="seek" type="range" min="0" max="1000" value="0" aria-label="播放進度"><div class="time"><span id="currentTime">0:00</span> / <span id="duration">--:--</span></div></div><button class="speed" id="speedBtn">1×</button></div><div class="status" id="audioStatus"></div><div class="quick"><section class="panel"><h4>▤　本集簡介</h4><p id="dIntro"></p></section><aside class="panel soft" id="dQuote"></aside></div><section class="panel takeaways"><h4>💡　這一集，你會帶走</h4><ul id="dTakeaways"></ul></section><div class="microgrid"><section class="micro"><h5>💬 想一想</h5><p id="dThink"></p></section><section class="micro"><h5>🌱 今天的小行動</h5><p id="dAction"></p></section><section class="micro"><h5>♡ 留給自己的一句話</h5><p id="dLine"></p></section></div><div class="mobile-bottom-nav"><div class="continue-label">繼續聽</div><div class="bottom-nav-row"><button class="navbtn" id="prevBtnBottom">← 上一集</button><button class="navbtn" id="nextBtnBottom">下一集 →</button></div><button class="all-episodes-btn" id="mobileBottomPicker" type="button">查看全部集數</button></div></article></div></section>
